@@ -12,11 +12,15 @@ class UserHomeMain extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const List<NavItemModel> menuItems = [
+      NavItemModel(name: 'Dashboard', icon: FontAwesomeIcons.sheetPlastic),
+    ];
     return SafeArea(
       child: Scaffold(
           body: !context.read<AppService>().isMobileDevice
               ? SideBarWidget(
                   navigationShell: navigationShell,
+                  menuItems: menuItems,
                 )
               : Expanded(child: navigationShell),
           bottomNavigationBar: context.read<AppService>().isMobileDevice

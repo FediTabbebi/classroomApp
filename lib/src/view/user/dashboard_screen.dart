@@ -1,7 +1,10 @@
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/provider/user/dashboard_provider.dart';
+import 'package:classroom_app/src/view/user/post_screen/all_posts_screen.dart';
+import 'package:classroom_app/src/widget/app_bar_widget.dart';
 import 'package:classroom_app/utils/extension_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 class UserDashboardScreen extends StatelessWidget {
@@ -9,53 +12,58 @@ class UserDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<DashboardProvider, int>(
-        selector: (context, provider) => provider.currentIndex,
-        builder: (context, currentIndex, child) {
-          return Column(
-            children: [
-              Row(
-                children: [
-                  navBarItem(
-                    context: context,
-                    title: "Discussion",
-                    currentIndex: currentIndex,
-                    index: 1,
-                    onTap: () {
-                      context.read<DashboardProvider>().updatePageIndex(1);
-                    },
-                  ),
-                  navBarItem(
-                    context: context,
-                    title: "Files",
-                    currentIndex: currentIndex,
-                    index: 2,
-                    onTap: () {
-                      context.read<DashboardProvider>().updatePageIndex(2);
-                    },
-                  ),
-                ].divide(const SizedBox(
-                  width: 5,
-                )),
-              ),
-              Expanded(
-                child: IndexedStack(
-                  // textDirection: TextDirection.rtl,
-                  sizing: StackFit.expand,
-                  index: currentIndex - 1,
-                  children: const [
-                    SizedBox(
-                      child: Text("Disccussion page"),
+    return Scaffold(
+      appBar: const AppBarWidget(
+        title: "Dashboard",
+        subtitle: "Here you will find all your assignee work",
+        leadingIconData: FontAwesomeIcons.sheetPlastic,
+      ),
+      body: Selector<DashboardProvider, int>(
+          selector: (context, provider) => provider.currentIndex,
+          builder: (context, currentIndex, child) {
+            return Column(
+              children: [
+                Row(
+                  children: [
+                    navBarItem(
+                      context: context,
+                      title: "Discussion",
+                      currentIndex: currentIndex,
+                      index: 1,
+                      onTap: () {
+                        context.read<DashboardProvider>().updatePageIndex(1);
+                      },
                     ),
-                    SizedBox(
-                      child: Text("files page"),
+                    navBarItem(
+                      context: context,
+                      title: "Files",
+                      currentIndex: currentIndex,
+                      index: 2,
+                      onTap: () {
+                        context.read<DashboardProvider>().updatePageIndex(2);
+                      },
                     ),
-                  ],
+                  ].divide(const SizedBox(
+                    width: 5,
+                  )),
                 ),
-              ),
-            ],
-          );
-        });
+                Expanded(
+                  child: IndexedStack(
+                    // textDirection: TextDirection.rtl,
+                    sizing: StackFit.expand,
+                    index: currentIndex - 1,
+                    children: [
+                      AllPostsScreen(),
+                      const SizedBox(
+                        child: Center(child: Text("files page")),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }),
+    );
   }
 
   Widget navBarItem({required BuildContext context, required String title, required int currentIndex, required int index, required Function() onTap, int? itemLength}) => Column(

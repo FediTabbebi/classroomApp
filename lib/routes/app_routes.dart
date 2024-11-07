@@ -8,7 +8,7 @@ import 'package:classroom_app/src/error_page.dart';
 import 'package:classroom_app/src/view/admin/admin_home_main.dart';
 import 'package:classroom_app/src/view/admin/category_management_screen.dart';
 import 'package:classroom_app/src/view/admin/post_management_screen.dart';
-import 'package:classroom_app/src/view/admin/user_management_screen.dart';
+import 'package:classroom_app/src/view/admin/user_management/user_management.dart';
 import 'package:classroom_app/src/view/login_screen.dart';
 import 'package:classroom_app/src/view/register_screen.dart';
 import 'package:classroom_app/src/view/shared/edit_profile.dart';
@@ -83,12 +83,13 @@ class AppNavigation {
                           onRefresh: () async {
                             await context.read<UserProvider>().getUsersAsFuture(context);
                           },
-                          child: Consumer2<UserProvider, List<UserModel>?>(builder: (context, provider, data, child) {
-                            return AdminUserManagementScreen(
-                              provider: provider,
-                              usersList: data,
-                            );
-                          }),
+                          child: Selector<List<UserModel>?, List<UserModel>?>(
+                              selector: (context, users) => users,
+                              builder: (context, userModelList, child) {
+                                return UserManagementScreen(
+                                  usersList: userModelList,
+                                );
+                              }),
                         )),
                     context: context,
                     state: state,
@@ -164,35 +165,66 @@ class AppNavigation {
                   ),
                 )
               ]),
-              StatefulShellBranch(routes: <RouteBase>[
-                GoRoute(
-                    name: "admin-setting-Screen",
-                    path: "/admin-setting-Screen",
-                    pageBuilder: (
-                      context,
-                      state,
-                    ) =>
-                        buildPageWithDefaultTransition(
-                          child: UserSettingsScreen(),
-                          context: context,
-                          state: state,
-                        ),
-                    routes: [
-                      GoRoute(
-                        name: "adminProfile",
-                        path: "adminProfile",
-                        pageBuilder: (
-                          context,
-                          state,
-                        ) =>
-                            buildPageWithDefaultTransition(
-                          child: const EditProfileScreen(),
-                          context: context,
-                          state: state,
-                        ),
-                      )
-                    ])
-              ]),
+              if (appService.isMobileDevice)
+                StatefulShellBranch(routes: <RouteBase>[
+                  GoRoute(
+                      name: "admin-setting-Screen",
+                      path: "/admin-setting-Screen",
+                      pageBuilder: (
+                        context,
+                        state,
+                      ) =>
+                          buildPageWithDefaultTransition(
+                            child: UserSettingsScreen(),
+                            context: context,
+                            state: state,
+                          ),
+                      routes: [
+                        GoRoute(
+                          name: "adminProfile",
+                          path: "adminProfile",
+                          pageBuilder: (
+                            context,
+                            state,
+                          ) =>
+                              buildPageWithDefaultTransition(
+                            child: const EditProfileScreen(),
+                            context: context,
+                            state: state,
+                          ),
+                        )
+                      ])
+                ]),
+              if (!appService.isMobileDevice)
+                StatefulShellBranch(routes: <RouteBase>[
+                  GoRoute(
+                      name: "admin-setting-Screen",
+                      path: "/admin-setting-Screen",
+                      pageBuilder: (
+                        context,
+                        state,
+                      ) =>
+                          buildPageWithDefaultTransition(
+                            child: const SettingScreenWeb(),
+                            context: context,
+                            state: state,
+                          ),
+                      routes: [
+                        GoRoute(
+                          name: "adminProfile",
+                          path: "adminProfile",
+                          pageBuilder: (
+                            context,
+                            state,
+                          ) =>
+                              buildPageWithDefaultTransition(
+                            child: const EditProfileScreen(),
+                            context: context,
+                            state: state,
+                          ),
+                        )
+                      ])
+                ]),
             ]),
         StatefulShellRoute.indexedStack(
             pageBuilder: (context, state, navigationShell) => buildPageWithDefaultTransition(

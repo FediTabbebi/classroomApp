@@ -1,15 +1,17 @@
 import 'package:classroom_app/locator.dart';
 import 'package:classroom_app/model/user_model.dart';
 import 'package:classroom_app/service/user_management_service.dart';
+import 'package:classroom_app/src/view/admin/user_management/user_management_datasource.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 
 class UserProvider with ChangeNotifier {
   AdminUserManagementService service = locator<AdminUserManagementService>();
+  UserManagementDatasource? userManagementDataSource;
+
   UserModel? currentUser;
-  List<UserModel>? userModelList = [];
-  List<UserModel>? allusers = [];
+  List<UserModel> userModelList = [];
   String fliterQuery = "";
 
   Future<List<UserModel>?> getUsersAsFuture(BuildContext context) async {
@@ -19,21 +21,20 @@ class UserProvider with ChangeNotifier {
     });
 
     userModelList = rslt.where((user) => user.userId != currentUser!.userId).toList();
-    allusers = rslt.where((user) => user.userId != currentUser!.userId).toList();
-    notifyListeners();
+
     return userModelList;
   }
 
-  void filterData(
-    String value,
-  ) {
-    if (value.isEmpty) {
-      userModelList = List.from(allusers!); // Reset to all categories if the search value is empty
-    } else {
-      userModelList = allusers!.where((item) => item.firstName.toLowerCase().contains(value.toLowerCase())).toList();
-    }
-    notifyListeners();
-  }
+  // void filterData(
+  //   String value,
+  // ) {
+  //   if (value.isEmpty) {
+  //     userModelList = List.from(allusers); // Reset to all categories if the search value is empty
+  //   } else {
+  //     userModelList = allusers.where((item) => item.firstName.toLowerCase().contains(value.toLowerCase())).toList();
+  //   }
+  //   notifyListeners();
+  // }
 
   Future<void> showingDialog(
     BuildContext context,

@@ -12,17 +12,18 @@ class AdminHomeMain extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const List<NavItemModel> menuItems = [
+      NavItemModel(name: 'Dashboard', icon: FontAwesomeIcons.sheetPlastic),
+      NavItemModel(name: 'users', icon: FontAwesomeIcons.users),
+    ];
     return SafeArea(
       child: Scaffold(
-          body: Column(
-            children: [
-              if (!context.read<AppService>().isMobileDevice)
-                SideBarWidget(
+          body: !context.read<AppService>().isMobileDevice
+              ? SideBarWidget(
                   navigationShell: navigationShell,
-                ),
-              Expanded(child: navigationShell),
-            ],
-          ),
+                  menuItems: menuItems,
+                )
+              : Expanded(child: navigationShell),
           bottomNavigationBar: context.read<AppService>().isMobileDevice
               ? Visibility(
                   visible: navigationShell.shellRouteContext.routerState.fullPath != "/admin-second-page/admin-post-details",

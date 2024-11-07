@@ -5,11 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 UserModel userFromJson(String str) => UserModel.fromMap(json.decode(str));
 
 String userToJson(UserModel data) => json.encode(data.toJson());
-final userRef =
-    FirebaseFirestore.instance.collection('users').withConverter<UserModel>(
-          fromFirestore: (snapshot, _) => UserModel.fromMap(snapshot.data()!),
-          toFirestore: (user, _) => user.toJson(),
-        );
+final userRef = FirebaseFirestore.instance.collection('users').withConverter<UserModel>(
+      fromFirestore: (snapshot, _) => UserModel.fromMap(snapshot.data()!),
+      toFirestore: (user, _) => user.toJson(),
+    );
 
 class UserModel {
   String userId;

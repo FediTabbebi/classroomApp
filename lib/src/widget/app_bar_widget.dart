@@ -1,3 +1,4 @@
+import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/theme/themes.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,11 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       toolbarHeight: 72,
       automaticallyImplyLeading: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: context.read<AppService>().isMobileDevice
+          ? Colors.transparent
+          : context.read<ThemeProvider>().isDarkMode
+              ? const Color(0xff1D1D22)
+              : const Color(0xffFDFDFD),
       elevation: 0,
       leadingWidth: 80,
       titleSpacing: 0,

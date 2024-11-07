@@ -116,20 +116,15 @@ class Themes {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
-        progressIndicatorTheme: const ProgressIndicatorThemeData(
-          color: primaryColor,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF2C282E),
-        textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: primaryColor,
-        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(color: primaryColor),
+        scaffoldBackgroundColor: const Color(0xFF28282E),
+        textSelectionTheme: const TextSelectionThemeData(cursorColor: primaryColor),
         inputDecorationTheme: InputDecorationTheme(
-          errorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffECB4B1), width: 1), borderRadius: BorderRadius.circular(10.0)),
-          enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffD3D7DB), width: 1), borderRadius: BorderRadius.circular(10.0)),
-          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: primaryColor, width: 1), borderRadius: BorderRadius.circular(10.0)),
-          focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: primaryColor, width: 1), borderRadius: BorderRadius.circular(10.0)),
-          filled: true,
-          fillColor: const Color(0xFF2C282E),
-        ),
+            errorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffECB4B1), width: 1), borderRadius: BorderRadius.circular(10.0)),
+            enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffD3D7DB), width: 1), borderRadius: BorderRadius.circular(10.0)),
+            focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: primaryColor, width: 1), borderRadius: BorderRadius.circular(10.0)),
+            focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: primaryColor, width: 1), borderRadius: BorderRadius.circular(10.0)),
+            filled: true,
+            fillColor: const Color(0xFF28282E)),
       );
 }

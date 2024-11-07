@@ -63,14 +63,17 @@ class RegisterScreen extends StatelessWidget {
                       if (ResponsiveWidget.isLargeScreen(context))
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.all(5),
+                            padding: const EdgeInsets.all(8),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: Image.asset(
-                                AppImages.authImg,
-                                fit: BoxFit.cover,
-                                width: 1031,
-                                height: 1051,
+                              child: ColoredBox(
+                                color: const Color(0xff1D1D22),
+                                child: Image.asset(
+                                  AppImages.authImg,
+                                  fit: BoxFit.cover,
+                                  width: 1031,
+                                  height: 1051,
+                                ),
                               ),
                             ),
                           ),

@@ -35,7 +35,7 @@ class AppService extends ChangeNotifier {
           currentUser = value;
           userProvider.updateUser(currentUser!, false);
 
-          if (currentUser!.role == "Admin") {
+          if (currentUser!.role == "admin") {
             userRole = UserType.admin;
             initHomeLocation = "/admin-users-screen";
           } else {

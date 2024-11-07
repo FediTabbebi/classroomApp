@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:classroom_app/constant/app_icons.dart';
 import 'package:classroom_app/constant/app_images.dart';
+import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/login_provider.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
@@ -15,17 +16,15 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class SideBarWidget extends StatelessWidget {
+  final List<NavItemModel> menuItems;
   final StatefulNavigationShell navigationShell;
 
-  const SideBarWidget({super.key, required this.navigationShell});
+  const SideBarWidget({super.key, required this.menuItems, required this.navigationShell});
 
   @override
   Widget build(BuildContext context) {
     final controller = SideMenuController();
 
-    const List<NavItemModel> menuItems = [
-      NavItemModel(name: 'Dashboard', icon: FontAwesomeIcons.sheetPlastic),
-    ];
     const List<NavItemModel> accountItems = [
       NavItemModel(name: 'Settings', icon: FontAwesomeIcons.gear),
     ];
@@ -33,7 +32,11 @@ class SideBarWidget extends StatelessWidget {
     return Row(
       children: [
         SideMenu(
-          backgroundColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff201D22) : Colors.white,
+          backgroundColor: context.watch<ThemeProvider>().isDarkMode
+              ? const Color(0xff1D1D22)
+              : context.read<ThemeProvider>().isDarkMode
+                  ? const Color(0xff1D1D22)
+                  : const Color(0xffFDFDFD),
           hasResizer: false,
           hasResizerToggle: false,
           maxWidth: 300,
@@ -103,13 +106,19 @@ class SideBarWidget extends StatelessWidget {
                       selectedTitleStyle: const TextStyle(fontSize: 16, color: Themes.primaryColor, fontWeight: FontWeight.w700),
                     ),
                   ),
-                  if (data.isOpen) const SideMenuItemDataDivider(divider: Divider(), padding: EdgeInsetsDirectional.only(top: 15)),
+                  if (data.isOpen)
+                    SideMenuItemDataDivider(
+                        divider: Divider(
+                          color: Theme.of(context).highlightColor,
+                        ),
+                        padding: const EdgeInsetsDirectional.only(top: 15)),
                   if (data.isOpen) const SideMenuItemDataTitle(title: 'Account', padding: EdgeInsetsDirectional.only(start: 10, top: 20, bottom: 15)),
                   ...accountItems.map(
                     (e) => SideMenuItemDataTile(
                       isSelected: navigationShell.currentIndex == accountItems.indexOf(e) + 3,
                       onTap: () {
-                        goToBranch(accountItems.indexOf(e) + 3);
+                        int settingBranchIndex = context.read<AppService>().userRole == UserType.admin ? accountItems.indexOf(e) + 3 : accountItems.indexOf(e) + 3;
+                        goToBranch(settingBranchIndex);
                       },
                       title: e.name,
                       icon: Icon(
