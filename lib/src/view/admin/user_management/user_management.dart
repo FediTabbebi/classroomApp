@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:classroom_app/constant/app_images.dart';
 import 'package:classroom_app/model/user_model.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/provider/update_user_provider.dart';
@@ -44,158 +45,173 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   double dataPagerHeight = 80;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBarWidget(
-            title: "User Management Hub",
-            subtitle: "User management options are available here",
-            leadingIconData: FontAwesomeIcons.userGroup,
-            actions: !ResponsiveWidget.isLargeScreen(context)
-                ? [
-                    Tooltip(
-                      message: "Add user",
-                      exitDuration: Duration.zero,
-                      child: IconButton(
-                          onPressed: () {
-                            showAnimatedDialog<void>(
-                                barrierDismissible: false,
-                                animationType: DialogTransitionType.fadeScale,
-                                duration: const Duration(milliseconds: 300),
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return const AddOrUpdateUserDialog();
-                                });
-                          },
-                          icon: Icon(
-                            Icons.add,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 30,
-                          )),
-                    )
-                  ]
-                : null),
-        body: widget.usersList == null
-            ? Center(
-                child: LoadingIndicatorWidget(
-                size: 40,
-                color: Theme.of(context).colorScheme.primary,
-              ))
-            : Selector<UserProvider, List<UserModel>?>(
-                selector: (context, provider) => provider.userModelList,
-                builder: (context, usersList, child) {
-                  List<UserModel> filteredUsers = usersList!.where((attempt) {
-                    final filtred = usersList.firstWhere((user) => user.userId == attempt.userId,
-                        orElse: () => UserModel(
-                              userId: "",
-                              firstName: "",
-                              lastName: "",
-                              email: "",
-                              password: "",
-                              profilePicture: "",
-                              role: "",
-                              createdAt: DateTime.now(),
-                              updatedAt: DateTime.now(),
-                              isDeleted: false,
-                            ));
-                    if (filtred.userId == '') {
-                      return false;
-                    }
-                    String userName = filtred.email.toLowerCase();
-                    return userName.contains(searchQuery.toLowerCase());
-                  }).toList();
-
-                  context.read<UserProvider>().userManagementDataSource = UserManagementDatasource(
-                    users: filteredUsers,
-                    context: context,
-                  );
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 24),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              SizedBox(
-                                height: 38,
-                                width: 300,
-                                child: TextField(
-                                  controller: searchController,
-                                  style: const TextStyle(fontSize: 14),
-                                  decoration: InputDecoration(
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(width: 1, color: Themes.primaryColor),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1, color: Theme.of(context).highlightColor), borderRadius: BorderRadius.circular(10)),
-                                    // contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                                    prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
-                                    hintText: "Search for a user",
-                                    hintStyle: const TextStyle(fontSize: 14, height: 3.5),
-                                    suffixIcon: searchQuery.isNotEmpty
-                                        ? IconButton(
-                                            icon: const Icon(
-                                              Icons.clear,
-                                              size: 20,
-                                              color: Color(0xff667085),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                searchController.clear();
-                                                searchQuery = '';
-                                              });
-                                            },
-                                          )
-                                        : null,
-                                  ),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      searchQuery = value;
-                                    });
-                                  },
-                                ),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+          appBar: AppBarWidget(
+              title: "User Management Hub",
+              subtitle: "User management options are available here",
+              leadingIconData: FontAwesomeIcons.userGroup,
+              actions: !ResponsiveWidget.isLargeScreen(context)
+                  ? [
+                      Tooltip(
+                        message: "Add user",
+                        exitDuration: Duration.zero,
+                        child: IconButton(
+                            onPressed: () {
+                              showAnimatedDialog<void>(
+                                  barrierDismissible: false,
+                                  animationType: DialogTransitionType.fadeScale,
+                                  duration: const Duration(milliseconds: 300),
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return const AddOrUpdateUserDialog();
+                                  });
+                            },
+                            icon: Icon(
+                              Icons.add,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 30,
+                            )),
+                      )
+                    ]
+                  : null),
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: SizedBox(
+                          height: 45,
+                          width: ResponsiveWidget.isLargeScreen(context) ? 300 : double.infinity,
+                          child: TextField(
+                            controller: searchController,
+                            style: const TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(width: 1, color: Themes.primaryColor),
                               ),
-                              if (ResponsiveWidget.isLargeScreen(context))
-                                Tooltip(
-                                  message: "Add user",
-                                  exitDuration: Duration.zero,
-                                  child: ElevatedButtonWidget(
-                                      radius: 6,
-                                      height: 43,
-                                      width: 100,
+                              enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1, color: Theme.of(context).highlightColor), borderRadius: BorderRadius.circular(10)),
+                              // contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                              prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
+                              hintText: "Search for a user",
+                              hintStyle: const TextStyle(fontSize: 14),
+                              suffixIcon: searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(
+                                        Icons.clear,
+                                        size: 20,
+                                        color: Color(0xff667085),
+                                      ),
                                       onPressed: () {
-                                        showAnimatedDialog<void>(
-                                            barrierDismissible: false,
-                                            animationType: DialogTransitionType.fadeScale,
-                                            duration: const Duration(milliseconds: 300),
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return const AddOrUpdateUserDialog();
-                                            });
+                                        setState(() {
+                                          searchController.clear();
+                                          searchQuery = '';
+                                        });
                                       },
-                                      text: "Add user"),
-                                )
-                            ],
+                                    )
+                                  : null,
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                searchQuery = value;
+                              });
+                            },
                           ),
                         ),
-                        ResponsiveWidget.isLargeScreen(context) ? largeScreen(filteredUsers) : smallScreen(filteredUsers)
-                      ],
-                    ),
-                  );
-                }));
+                      ),
+                      if (ResponsiveWidget.isLargeScreen(context))
+                        Tooltip(
+                          message: "Add user",
+                          exitDuration: Duration.zero,
+                          child: ElevatedButtonWidget(
+                              radius: 6,
+                              height: 43,
+                              width: 100,
+                              onPressed: () {
+                                showAnimatedDialog<void>(
+                                    barrierDismissible: false,
+                                    animationType: DialogTransitionType.fadeScale,
+                                    duration: const Duration(milliseconds: 300),
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return const AddOrUpdateUserDialog();
+                                    });
+                              },
+                              text: "Add user"),
+                        )
+                    ],
+                  ),
+                ),
+                widget.usersList == null
+                    ? Expanded(
+                        child: Center(
+                            child: LoadingIndicatorWidget(
+                          size: 40,
+                          color: Theme.of(context).colorScheme.primary,
+                        )),
+                      )
+                    : Selector<UserProvider, List<UserModel>?>(
+                        selector: (context, provider) => provider.userModelList,
+                        builder: (context, usersList, child) {
+                          List<UserModel> filteredUsers = usersList!.where((attempt) {
+                            final filtred = usersList.firstWhere((user) => user.userId == attempt.userId,
+                                orElse: () => UserModel(
+                                      userId: "",
+                                      firstName: "",
+                                      lastName: "",
+                                      email: "",
+                                      password: "",
+                                      profilePicture: "",
+                                      role: "",
+                                      createdAt: DateTime.now(),
+                                      updatedAt: DateTime.now(),
+                                      isDeleted: false,
+                                    ));
+                            if (filtred.userId == '') {
+                              return false;
+                            }
+                            String userName = filtred.email.toLowerCase();
+                            return userName.contains(searchQuery.toLowerCase());
+                          }).toList();
+
+                          context.read<UserProvider>().userManagementDataSource = UserManagementDatasource(
+                            users: filteredUsers,
+                            context: context,
+                          );
+
+                          return filteredUsers.isEmpty
+                              ? const Expanded(
+                                  child: Center(
+                                  child: Text("There is no user match this email address"),
+                                ))
+                              : ResponsiveWidget.isLargeScreen(context)
+                                  ? largeScreen(filteredUsers)
+                                  : smallScreen(filteredUsers);
+                        }),
+              ],
+            ),
+          )),
+    );
   }
 
   smallScreen(List<UserModel> filteredUsers) {
-    return Expanded(
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: filteredUsers.length,
-        itemBuilder: (context, index) {
-          return customLisTileWidget(context, filteredUsers[index], index * 100);
-        },
-      ),
+    return ListView.separated(
+      shrinkWrap: true,
+      itemCount: filteredUsers.length,
+      itemBuilder: (context, index) {
+        return customLisTileWidget(context, filteredUsers[index], index * 100);
+      },
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
     );
   }
 
@@ -203,8 +219,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return Container(
       // alignment: Alignment.center,
       // margin: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 10),
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(10), border: Border.all(color: Theme.of(context).highlightColor)),
+      decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: !context.read<ThemeProvider>().isDarkMode ? Border.all(color: Theme.of(context).highlightColor) : null),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           buildSfDataGrid(
@@ -232,42 +252,41 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }) {
     return SfDataPagerTheme(
       data: SfDataPagerThemeData(
-        selectedItemTextStyle: const TextStyle(color: Colors.white),
-        itemBorderWidth: 0.5,
-        itemBorderColor: Theme.of(context).hintColor,
-        itemBorderRadius: BorderRadius.circular(5),
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        itemColor: Theme.of(context).colorScheme.surface,
-      ),
-      child: Align(
-        child: SfDataPager(
-          itemHeight: 47,
-          itemWidth: 50,
-          navigationItemWidth: 100,
-          delegate: userManagementDataSource,
-          visibleItemsCount: 5,
-          direction: Axis.horizontal,
-          initialPageIndex: 1,
-          lastPageItemVisible: false,
-          firstPageItemVisible: false,
-          pageCount: users.isEmpty ? 1 : (users.length / 10).ceil().toDouble(),
-          pageItemBuilder: (String itemName) {
-            if (itemName == 'Next') {
-              return Text(
-                "Next",
-                style: Theme.of(context).textTheme.labelMedium,
-              );
-            }
-            if (itemName == 'Previous') {
-              return Text(
-                "Previous",
-                style: Theme.of(context).textTheme.labelMedium,
-              );
-            }
-            return null;
-          },
-        ),
+          disabledItemColor: Theme.of(context).hoverColor,
+          selectedItemTextStyle: const TextStyle(color: Colors.white),
+          itemBorderWidth: 0.5,
+          itemBorderColor: Theme.of(context).highlightColor,
+          itemBorderRadius: BorderRadius.circular(5),
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          itemColor: Theme.of(context).colorScheme.surface,
+          itemTextStyle: Theme.of(context).textTheme.bodySmall!),
+      child: SfDataPager(
+        itemHeight: 47,
+        itemWidth: 50,
+        navigationItemWidth: 100,
+        delegate: userManagementDataSource,
+        visibleItemsCount: 5,
+        direction: Axis.horizontal,
+        initialPageIndex: 1,
+        lastPageItemVisible: false,
+        firstPageItemVisible: false,
+        pageCount: users.isEmpty ? 1 : (users.length / 10).ceil().toDouble(),
+        pageItemBuilder: (String itemName) {
+          if (itemName == 'Next') {
+            return const Text(
+              "Next",
+              style: TextStyle(fontSize: 14),
+            );
+          }
+          if (itemName == 'Previous') {
+            return const Text(
+              "Previous",
+              style: TextStyle(fontSize: 14),
+            );
+          }
+          return null;
+        },
       ),
     );
   }
@@ -467,21 +486,29 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Widget customLisTileWidget(BuildContext context, UserModel user, int durationDelay) => Consumer<ThemeProvider>(builder: (ctx, provider, child) {
-        return Padding(
+        return Material(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(ctx).cardTheme.color,
+              borderRadius: BorderRadius.circular(10),
+            ),
             padding: const EdgeInsets.all(8.0),
-            child: Material(
-              elevation: 1,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-              child: ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                tileColor: Theme.of(ctx).cardTheme.color,
-                leading: user.profilePicture.isEmpty
-                    ? const SizedBox(
-                        width: 60,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Leading section: User Profile Picture
+                user.profilePicture.isEmpty
+                    ? Container(
                         height: 60,
-                        child: Icon(
-                          Icons.person,
-                          size: 35,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                            image: Image.asset(AppImages.userProfile).image,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       )
                     : SizedBox(
@@ -490,106 +517,141 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         child: CachedNetworkImage(
                           imageUrl: user.profilePicture,
                           placeholder: (context, url) => Container(
-                              height: 20,
-                              width: 20,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
+                            height: 20,
+                            width: 20,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                            ),
+                            child: const UnconstrainedBox(
+                              child: SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                ),
                               ),
-                              child: const UnconstrainedBox(
-                                child: SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                    )),
-                              )),
+                            ),
+                          ),
                           imageBuilder: (context, imageProvider) => Container(
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+                              image: DecorationImage(
+                                image: imageProvider,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                           errorWidget: (context, url, error) => const Icon(Icons.error),
                         ),
                       ),
-                title: Text(
-                  user.firstName,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 16), // Spacing between leading and text
+
+                // Main content: User details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title (User first name)
+                      Text(
+                        user.firstName,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Subtitle: User email and "Member since" info
+                      Text(
+                        user.email,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        "Member since ${"${user.createdAt.toLocal()}".split(' ')[0]}",
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                // Trailing section: Status and options
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      user.email,
+                      user.isDeleted ? "Banned" : "Active",
                       softWrap: true,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(
+                        color: user.isDeleted ? Colors.red : Colors.green,
+                        fontSize: 14,
+                      ),
                     ),
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      "Member since ${"${user.createdAt.toLocal()}".split(' ')[0]}",
-                      softWrap: true,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Themes.primaryColor, fontSize: 10),
-                    ),
+                    const SizedBox(width: 5),
+                    menuWidget(context, user)
                   ],
                 ),
-                trailing: Wrap(
-                  spacing: 15,
-                  children: [
-                    Text(
-                      user.isDeleted ? " Banned" : "Active",
-                      softWrap: true,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: TextStyle(color: user.isDeleted ? Colors.red : Colors.green, fontSize: 14),
-                    ),
-                    const SizedBox(
-                      width: 5,
-                    ),
-                    PopupMenuButton<String>(
-                        tooltip: "Options",
-                        onSelected: (value) {},
-                        itemBuilder: (context) => [
-                              PopupMenuItem<String>(
-                                value: 'Edit',
-                                child: const Text('Edit'),
-                                onTap: () {
-                                  showAnimatedDialog<void>(
-                                      barrierDismissible: false,
-                                      animationType: DialogTransitionType.fadeScale,
-                                      duration: const Duration(milliseconds: 300),
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AddOrUpdateUserDialog(
-                                          user: user,
-                                        );
-                                      });
-                                },
-                              ),
-                              PopupMenuItem<String>(
-                                value: 'Ban',
-                                child: Text(
-                                  user.isDeleted ? " Unban" : "ban",
-                                ),
-                                onTap: () async {
-                                  await context.read<UpdateUserProvider>().banOrUnbanUser(context, user);
-                                },
-                              ),
-                            ],
-                        child: Icon(
-                          FontAwesomeIcons.ellipsisVertical,
-                          color: Theme.of(context).highlightColor,
-                          size: 20,
-                        )),
-                  ],
+              ],
+            ),
+          ),
+        );
+      });
+
+  Widget menuWidget(BuildContext context, UserModel user) => MenuAnchor(
+          alignmentOffset: const Offset(-80, -30),
+          builder: (BuildContext context, MenuController controller, Widget? child) {
+            return IconButton(
+                onPressed: () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+                icon: const Icon(
+                  FontAwesomeIcons.ellipsisVertical,
+                  size: 24,
+                ),
+                tooltip: "Options");
+          },
+          menuChildren: [
+            MenuItemButton(
+              onPressed: () async {
+                await context.read<UpdateUserProvider>().banOrUnbanUser(context, user);
+              },
+              child: SizedBox(
+                width: 100,
+                child: Text(
+                  user.isDeleted ? " Unban" : "Ban",
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
               ),
-            ));
-      });
+            ),
+            MenuItemButton(
+              child: const Text(
+                "Edit",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              onPressed: () async {
+                showAnimatedDialog<void>(
+                    barrierDismissible: false,
+                    animationType: DialogTransitionType.fadeScale,
+                    duration: const Duration(milliseconds: 300),
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AddOrUpdateUserDialog(
+                        user: user,
+                      );
+                    });
+              },
+            ),
+          ]);
 }

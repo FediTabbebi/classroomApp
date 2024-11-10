@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 class LoadingProgressDialog extends StatelessWidget {
   final String title;
   final String content;
-  const LoadingProgressDialog(
-      {required this.title, required this.content, super.key});
+  const LoadingProgressDialog({required this.title, required this.content, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +21,7 @@ class LoadingProgressDialog extends StatelessWidget {
                 height: 15,
               ),
               SizedBox(
-                width: 180,
+                width: 260,
                 child: Text(
                   title,
                   style: const TextStyle(

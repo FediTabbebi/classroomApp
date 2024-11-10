@@ -13,7 +13,7 @@ class UserHomeMain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const List<NavItemModel> menuItems = [
-      NavItemModel(name: 'Dashboard', icon: FontAwesomeIcons.sheetPlastic),
+      NavItemModel(name: 'My Classrooms', icon: FontAwesomeIcons.sheetPlastic),
     ];
     return SafeArea(
       child: Scaffold(
@@ -22,7 +22,7 @@ class UserHomeMain extends StatelessWidget {
                   navigationShell: navigationShell,
                   menuItems: menuItems,
                 )
-              : Expanded(child: navigationShell),
+              : navigationShell,
           bottomNavigationBar: context.read<AppService>().isMobileDevice
               ? Visibility(
                   visible: (navigationShell.shellRouteContext.routerState.fullPath != "/user-second-page/post-details" &&
@@ -37,28 +37,13 @@ class UserHomeMain extends StatelessWidget {
                     items: [
                       FlashyTabBarItem(
                         activeColor: Theme.of(context).colorScheme.primary,
-                        icon: const Icon(Icons.dashboard),
-                        title: const Text('Home'),
+                        icon: const Icon(FontAwesomeIcons.sheetPlastic),
+                        title: const Text('My Classrooms'),
                       ),
                       FlashyTabBarItem(
                         activeColor: Theme.of(context).colorScheme.primary,
-                        icon: const Icon(FontAwesomeIcons.usps),
-                        title: const Text('All posts'),
-                      ),
-                      FlashyTabBarItem(
-                        activeColor: Theme.of(context).colorScheme.primary,
-                        icon: const Icon(FontAwesomeIcons.envelopesBulk),
-                        title: const Text('My posts'),
-                      ),
-                      FlashyTabBarItem(
-                        activeColor: Theme.of(context).colorScheme.primary,
-                        icon: const Icon(Icons.calendar_today),
-                        title: const Text('Calendar'),
-                      ),
-                      FlashyTabBarItem(
-                        activeColor: Theme.of(context).colorScheme.primary,
-                        icon: const Icon(Icons.settings),
-                        title: const Text('settings'),
+                        icon: const Icon(FontAwesomeIcons.gear),
+                        title: const Text('Settings'),
                       ),
                     ],
                   ),

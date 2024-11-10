@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 String? validateEmailAddress(String value, bool isRegister) {
   if (value.isEmpty) {
@@ -144,4 +145,41 @@ Future<bool> platformChecker(DeviceInfoPlugin deviceInfo) async {
   }
 
   return false; // Assume it's not mobile if it's another platform
+}
+
+String colorToHex(Color color) {
+  return '#${color.value.toRadixString(16).padLeft(8, '0')}';
+}
+
+Color hexToColor(String hexString) {
+  final buffer = StringBuffer();
+  if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+  buffer.write(hexString.replaceFirst('#', ''));
+  return Color(int.parse(buffer.toString(), radix: 16));
+}
+
+String getAbbreviation(String label) {
+  // Trim any leading or trailing whitespace from the label
+  label = label.trim();
+
+  // Split the label into words
+  List<String> words = label.split(' ');
+
+  if (words.length > 1) {
+    // If there are multiple words, take the first letter of each
+    return words[0][0] + words[1][0]; // First letter of the first and second word
+  } else {
+    // If there's only one word, return the first two characters
+    return label.length > 1 ? label.substring(0, 2) : label;
+  }
+}
+
+String formatDate(DateTime dateTime) {
+  // Manually extract year, month, and day
+  int year = dateTime.year;
+  int month = dateTime.month;
+  int day = dateTime.day;
+
+  // Format as "yyyy-MM-dd"
+  return '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
 }

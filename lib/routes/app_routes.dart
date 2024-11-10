@@ -12,7 +12,6 @@ import 'package:classroom_app/src/view/register_screen.dart';
 import 'package:classroom_app/src/view/shared/edit_profile.dart';
 import 'package:classroom_app/src/view/shared/setting_screen.dart';
 import 'package:classroom_app/src/view/shared/setting_screen_web.dart';
-import 'package:classroom_app/src/view/user/dashboard_screen.dart';
 import 'package:classroom_app/src/view/user/myposts_screen/myclassrooms_screen.dart';
 import 'package:classroom_app/src/view/user/post_screen/post_details_screen.dart';
 import 'package:classroom_app/src/view/user/user_home_main.dart';
@@ -103,7 +102,7 @@ class AppNavigation {
                           state,
                         ) =>
                             buildPageWithDefaultTransition(
-                              child: CLassroomManagementScreen(),
+                              child: const CLassroomManagementScreen(),
                               context: context,
                               state: state,
                               // PostManagementScreen(),
@@ -263,49 +262,50 @@ class AppNavigation {
                       ),
                     ),
                   ]),
-              StatefulShellBranch(routes: <RouteBase>[
-                GoRoute(
-                    name: "user-myclassroom",
-                    path: "/user-myclassroom",
-                    pageBuilder: (
-                      context,
-                      state,
-                    ) =>
-                        buildPageWithDefaultTransition(
-                          child: const UserDashboardScreen(),
-                          context: context,
-                          state: state,
-                        ),
-                    routes: [
-                      GoRoute(
-                        name: "postDetails",
-                        path: "post-details",
-                        pageBuilder: (
-                          context,
-                          state,
-                        ) {
-                          int index = state.extra as int;
-                          return CustomTransitionPage(
-                              key: state.pageKey,
-                              child: PostDetailsScreen(
-                                index: index,
-                                isMyListPreview: false,
-                              ),
-                              transitionDuration: const Duration(milliseconds: 150),
-                              transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
-                                  position: animation.drive(
-                                    Tween<Offset>(
-                                      begin: const Offset(1, 0),
-                                      end: Offset.zero,
-                                    ).chain(CurveTween(curve: Curves.easeInOut)),
-                                  ),
-                                  // textDirection:
-                                  //    leftToRight ? TextDirection.ltr : TextDirection.rtl,
-                                  child: child));
-                        },
-                      ),
-                    ]),
-              ]),
+              // StatefulShellBranch(routes: <RouteBase>[
+              //   GoRoute(
+              //       name: "user-myclassroom",
+              //       path: "/user-myclassroom",
+              //       pageBuilder: (
+              //         context,
+              //         state,
+              //       ) =>
+              //           buildPageWithDefaultTransition(
+              //             child: const UserDashboardScreen(),
+              //             context: context,
+              //             state: state,
+              //           ),
+              //       routes: [
+              //         GoRoute(
+              //           name: "postDetails",
+              //           path: "post-details",
+              //           pageBuilder: (
+              //             context,
+              //             state,
+              //           ) {
+              //             int index = state.extra as int;
+              //             return CustomTransitionPage(
+              //                 key: state.pageKey,
+              //                 child: PostDetailsScreen(
+              //                   index: index,
+              //                   isMyListPreview: false,
+              //                 ),
+              //                 transitionDuration: const Duration(milliseconds: 150),
+              //                 transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
+              //                     position: animation.drive(
+              //                       Tween<Offset>(
+              //                         begin: const Offset(1, 0),
+              //                         end: Offset.zero,
+              //                       ).chain(CurveTween(curve: Curves.easeInOut)),
+              //                     ),
+              //                     // textDirection:
+              //                     //    leftToRight ? TextDirection.ltr : TextDirection.rtl,
+              //                     child: child));
+              //           },
+              //         ),
+              //       ]),
+              // ]),
+
               // StatefulShellBranch(routes: <RouteBase>[
               //   GoRoute(
               //       name: "myPostScreen",

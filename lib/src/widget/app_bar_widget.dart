@@ -16,11 +16,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       toolbarHeight: 72,
       automaticallyImplyLeading: false,
-      backgroundColor: context.read<AppService>().isMobileDevice
-          ? Colors.transparent
-          : context.read<ThemeProvider>().isDarkMode
-              ? const Color(0xff1D1D22)
-              : const Color(0xffFDFDFD),
+      backgroundColor: context.read<AppService>().isMobileDevice ? Colors.transparent : Theme.of(context).cardTheme.color,
       elevation: 0,
       leadingWidth: 80,
       titleSpacing: 0,

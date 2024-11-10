@@ -17,7 +17,7 @@ class Themes {
           titleSmall: TextStyle(fontFamily: 'Mulish', fontSize: 16),
           bodyLarge: TextStyle(fontFamily: 'Mulish', fontSize: 16),
           bodyMedium: TextStyle(fontFamily: 'Mulish', fontSize: 16),
-          bodySmall: TextStyle(fontFamily: 'Mulish', fontSize: 16),
+          bodySmall: TextStyle(fontFamily: 'Mulish', fontSize: 14),
           labelLarge: TextStyle(fontFamily: 'Mulish', fontSize: 16),
         ),
         colorScheme: const ColorScheme(
@@ -34,6 +34,7 @@ class Themes {
         brightness: Brightness.light,
         dividerTheme: const DividerThemeData(color: Color.fromARGB(255, 202, 202, 202)),
         cardTheme: CardTheme(
+          color: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
@@ -56,6 +57,7 @@ class Themes {
         textSelectionTheme: const TextSelectionThemeData(
           cursorColor: primaryColor,
         ),
+        scaffoldBackgroundColor: const Color(0xffFCFCFC),
         inputDecorationTheme: InputDecorationTheme(
           errorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffcc0000), width: 1), borderRadius: BorderRadius.circular(10.0)),
           enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffD3D7DB), width: 1), borderRadius: BorderRadius.circular(10.0)),
@@ -79,7 +81,7 @@ class Themes {
           titleSmall: TextStyle(fontFamily: 'Mulish', fontSize: 16),
           bodyLarge: TextStyle(fontFamily: 'Mulish', fontSize: 16),
           bodyMedium: TextStyle(fontFamily: 'Mulish', fontSize: 16),
-          bodySmall: TextStyle(fontFamily: 'Mulish', fontSize: 16),
+          bodySmall: TextStyle(fontFamily: 'Mulish', fontSize: 14),
           labelLarge: TextStyle(fontFamily: 'Mulish', fontSize: 16),
         ),
         colorScheme: const ColorScheme(
@@ -95,7 +97,8 @@ class Themes {
             onSurface: Color(0xFFFFFBFE)),
         brightness: Brightness.dark,
         cardTheme: CardTheme(
-          color: const Color(0xff18161A),
+          // color: const Color(0xff18161A),
+          color: const Color(0xff1D1D22),
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),

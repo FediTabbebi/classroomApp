@@ -23,7 +23,7 @@ class AdminHomeMain extends StatelessWidget {
                   navigationShell: navigationShell,
                   menuItems: menuItems,
                 )
-              : Expanded(child: navigationShell),
+              : navigationShell,
           bottomNavigationBar: context.read<AppService>().isMobileDevice
               ? Visibility(
                   visible: navigationShell.shellRouteContext.routerState.fullPath != "/admin-second-page/admin-post-details",
@@ -43,12 +43,12 @@ class AdminHomeMain extends StatelessWidget {
                       FlashyTabBarItem(
                         activeColor: Theme.of(context).colorScheme.primary,
                         icon: const Icon(FontAwesomeIcons.sheetPlastic),
-                        title: const Text('classrooms'),
+                        title: const Text('Classrooms'),
                       ),
                       FlashyTabBarItem(
                         activeColor: Theme.of(context).colorScheme.primary,
-                        icon: const Icon(Icons.settings),
-                        title: const Text('settings'),
+                        icon: const Icon(FontAwesomeIcons.gear),
+                        title: const Text('Settings'),
                       ),
                     ],
                   ),

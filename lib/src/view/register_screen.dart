@@ -201,7 +201,7 @@ class RegisterScreen extends StatelessWidget {
                                                             email: context.read<RegisterProvider>().emailController.text,
                                                             password: context.read<RegisterProvider>().passwordController.text,
                                                             profilePicture: '',
-                                                            role: 'user',
+                                                            role: 'User',
                                                             createdAt: DateTime.now(),
                                                             updatedAt: DateTime.now(),
                                                             isDeleted: false),

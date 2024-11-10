@@ -177,8 +177,8 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
                                     isDense: true,
                                     errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 1), borderRadius: BorderRadius.circular(5.0)),
                                     enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffD3D7DB), width: 1), borderRadius: BorderRadius.circular(5.0)),
-                                    focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xff6C4796), width: 1), borderRadius: BorderRadius.circular(5.0)),
-                                    focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xff6C4796), width: 1), borderRadius: BorderRadius.circular(5.0)),
+                                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1), borderRadius: BorderRadius.circular(5.0)),
+                                    focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1), borderRadius: BorderRadius.circular(5.0)),
                                     fillColor: Theme.of(context).cardTheme.color,
                                     errorStyle: const TextStyle(
                                       height: 1,

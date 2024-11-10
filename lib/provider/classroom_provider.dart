@@ -1,15 +1,20 @@
 import 'package:classroom_app/locator.dart';
 import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/service/classroom_service.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/src/widget/loading_progress_dialog.dart';
+import 'package:classroom_app/utils/helper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 
 class ClassroomProvider with ChangeNotifier {
   ClassroomService service = locator<ClassroomService>();
+  ThemeProvider themeProvider = locator<ThemeProvider>();
   UserModel? currentUser;
 
   String fliterQuery = "";
@@ -18,7 +23,7 @@ class ClassroomProvider with ChangeNotifier {
   final GlobalKey<FormState> classRoomFormKey = GlobalKey<FormState>();
   bool isSelectFromAllCategories = false;
   bool? updating;
-
+  Color? selectedColor;
   final classRoomMultiKey = GlobalKey<DropdownSearchState<String>>();
 
   List<UserModel> selectedUsers = [];
@@ -97,7 +102,7 @@ class ClassroomProvider with ChangeNotifier {
   //   }
   // }
 
-  Future<void> deleteClassroom(BuildContext context, String postId) async {
+  Future<void> deleteClassroom(BuildContext context, String classroomId) async {
     BuildContext? dialogContext;
     showDialog<void>(
         //  barrierColor: Colors.transparent,
@@ -110,7 +115,7 @@ class ClassroomProvider with ChangeNotifier {
             content: "processing ...",
           );
         });
-    await service.deleteclassroom(postId).then((value) async {
+    await service.deleteclassroom(classroomId).then((value) async {
       Navigator.of(dialogContext!).pop();
     }).onError((error, stackTrace) {
       Navigator.of(dialogContext!).pop();
@@ -176,6 +181,76 @@ class ClassroomProvider with ChangeNotifier {
         });
   }
 
+  Future<void> updateClassroom(BuildContext context, ClassroomModel classroom) async {
+    BuildContext? dialogContext;
+    if (detectClassroomChange(classroom)) {
+      print(colorToHex(selectedColor!) == classroom.colorHex);
+      print("selected color hex ${colorToHex(selectedColor!)}");
+      print("original color hex ${classroom.colorHex}");
+      showingDialog(context, "No Changes Detected", "Please make sure to modify at least one field before attempting to update.");
+    } else {
+      final List<String> selectedUsersIds = [];
+      for (var e in selectedUsers) {
+        selectedUsersIds.add(e.userId);
+      }
+      List<DocumentReference> invitedUsersRef = [];
+      if (selectedUsersIds.isNotEmpty) {
+        invitedUsersRef = selectedUsersIds.map((userId) {
+          return FirebaseFirestore.instance.doc('users/$userId');
+        }).toList();
+      }
+      print(colorToHex(selectedColor!) == classroom.colorHex);
+      print("selected color hex ${colorToHex(selectedColor!)}");
+      print("original color hex ${classroom.colorHex}");
+      final updatedClassroom = ClassroomModel(
+        id: classroom.id,
+        invitedUsersRef: invitedUsersRef,
+        label: classroomLabelController.text,
+        colorHex: colorToHex(selectedColor!),
+        comments: [],
+        createdByRef: classroom.createdByRef,
+        createdAt: classroom.createdAt,
+        updatedAt: DateTime.now(),
+      );
+      showDialog<void>(
+          //  barrierColor: Colors.transparent,
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext cxt) {
+            dialogContext = cxt;
+            return const LoadingProgressDialog(
+              title: "Updating classroom",
+              content: "Processing...",
+            );
+          });
+      await service.updateClassroom(updatedClassroom).then((value) async {
+        Navigator.of(dialogContext!).pop();
+        Navigator.of(context).pop();
+      }).onError((error, stackTrace) {
+        Navigator.of(dialogContext!).pop();
+        showingDialog(context, "errors", '$error');
+      });
+    }
+  }
+
+  bool detectClassroomChange(ClassroomModel classroom) {
+    final List<String> origianlSelectedUsersId = [];
+    final List<String> selectedUsersIds = [];
+    if (classroom.invitedUsers != null) {
+      for (var e in classroom.invitedUsers!) {
+        origianlSelectedUsersId.add(e.userId);
+      }
+    }
+
+    for (var e in selectedUsers) {
+      selectedUsersIds.add(e.userId);
+    }
+
+    return classroom.label == classroomLabelController.text &&
+        const SetEquality().equals(origianlSelectedUsersId.toSet(), selectedUsersIds.toSet()) &&
+        (colorToHex(selectedColor!) == classroom.colorHex);
+  }
+
   void updateCategorySelection() {
     isSelectFromAllCategories = !isSelectFromAllCategories;
     notifyListeners();
@@ -186,9 +261,11 @@ class ClassroomProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void clearControllers() {
+  void clearControllers(BuildContext context) {
     classroomLabelController.clear();
     selectedUsers.clear();
+    selectedColor = Theme.of(context).colorScheme.primary;
+    notifyListeners();
   }
 
   void addNewUsers(
@@ -209,5 +286,11 @@ class ClassroomProvider with ChangeNotifier {
   void initControllers(ClassroomModel classroom) {
     classroomLabelController.text = classroom.label;
     selectedUsers = classroom.invitedUsers!;
+    selectedColor = hexToColor(classroom.colorHex);
+  }
+
+  void updateSelectedColor(Color color) {
+    selectedColor = color;
+    notifyListeners();
   }
 }

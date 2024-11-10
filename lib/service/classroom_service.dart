@@ -22,31 +22,31 @@ class ClassroomService {
     }
   }
 
-  Stream<List<ClassroomModel>> getMyClassroomAsStream(String userID, BuildContext context) {
-    StreamController<List<ClassroomModel>> controller = StreamController<List<ClassroomModel>>();
+  // Stream<List<ClassroomModel>> getMyClassroomAsStream(String userID, BuildContext context) {
+  //   StreamController<List<ClassroomModel>> controller = StreamController<List<ClassroomModel>>();
 
-    FirebaseFirestore.instance.collection('classrooms').snapshots().listen(
-      (querySnapshot) async {
-        List<ClassroomModel> classroomList = [];
-        for (var doc in querySnapshot.docs) {
-          Map<String, dynamic> data = doc.data();
-          DocumentReference createdByRef = data['createdByRef'];
-          if (createdByRef.id == userID) {
-            classroomList.add(ClassroomModel.fromMap(data));
-          }
-        }
-        await getAllClassroomsCreatorsAndCommentors(classroomList, context);
-        controller.add(classroomList);
-      },
-      onError: (error) {
-        if (kDebugMode) {
-          print('Error getting classrooms: $error');
-        }
-      },
-    );
+  //   FirebaseFirestore.instance.collection('classrooms').snapshots().listen(
+  //     (querySnapshot) async {
+  //       List<ClassroomModel> classroomList = [];
+  //       for (var doc in querySnapshot.docs) {
+  //         Map<String, dynamic> data = doc.data();
+  //         DocumentReference createdByRef = data['createdByRef'];
+  //         if (createdByRef.id == userID) {
+  //           classroomList.add(ClassroomModel.fromMap(data));
+  //         }
+  //       }
+  //       await getAllClassroomsCreatorsAndCommentors(classroomList, context);
+  //       controller.add(classroomList);
+  //     },
+  //     onError: (error) {
+  //       if (kDebugMode) {
+  //         print('Error getting classrooms: $error');
+  //       }
+  //     },
+  //   );
 
-    return controller.stream;
-  }
+  //   return controller.stream;
+  // }
 
   Stream<List<ClassroomModel>> getAllClassroomAsStream(String role, String userId, BuildContext context) {
     StreamController<List<ClassroomModel>> controller = StreamController<List<ClassroomModel>>();

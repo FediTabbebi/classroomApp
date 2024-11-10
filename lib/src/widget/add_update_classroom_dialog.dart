@@ -21,13 +21,24 @@ class AddOrUpdateClassroomDialog extends StatefulWidget {
 }
 
 class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<ClassroomProvider>().clearControllers();
+  bool _initialized = false;
 
-    if (widget.classroom != null) {
-      context.read<ClassroomProvider>().initControllers(widget.classroom!);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_initialized) {
+      final classroomProvider = context.read<ClassroomProvider>();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        classroomProvider.clearControllers(context);
+
+        if (widget.classroom != null) {
+          classroomProvider.initControllers(widget.classroom!);
+        }
+      });
+
+      _initialized = true;
     }
   }
 
@@ -52,6 +63,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
     Colors.grey,
     Colors.blueGrey,
   ];
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -77,7 +89,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                       child: InkWell(
                         onTap: () {
                           Navigator.of(context).pop();
-                          context.read<ClassroomProvider>().clearControllers();
+                          // context.read<ClassroomProvider>().clearControllers();
                         },
                         child: Icon(
                           size: 20,
@@ -108,8 +120,15 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                       ],
                     );
                   }),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Thmubnail Color",
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 10.0),
+                  colorPickerWidget(),
                   const SizedBox(
-                    height: 10,
+                    height: 20,
                   ),
                   Align(
                     alignment: Alignment.bottomRight,
@@ -129,28 +148,26 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                               return FirebaseFirestore.instance.doc('users/$userId');
                             }).toList();
                           }
-
-                          // Create the ClassroomModel with all necessary fields
-                          context.read<ClassroomProvider>().addClassroom(
-                                context,
-                                ClassroomModel(
-                                  id: '',
-                                  invitedUsersRef: invitedUsersRef, // Insert the mapped document references
-                                  label: context.read<ClassroomProvider>().classroomLabelController.text,
-                                  colorHex: '#FFFFFF', // Provide a default or selected color in hex format
-                                  comments: [],
-                                  createdByRef: FirebaseFirestore.instance.doc('users/${context.read<UserProvider>().currentUser!.userId}'),
-                                  createdAt: DateTime.now(),
-                                  updatedAt: DateTime.now(),
-                                ),
-                              );
+                          widget.classroom != null
+                              ? context.read<ClassroomProvider>().updateClassroom(context, widget.classroom!)
+                              :
+                              // Create the ClassroomModel with all necessary fields
+                              context.read<ClassroomProvider>().addClassroom(
+                                    context,
+                                    ClassroomModel(
+                                      id: '',
+                                      invitedUsersRef: invitedUsersRef, // Insert the mapped document references
+                                      label: context.read<ClassroomProvider>().classroomLabelController.text,
+                                      colorHex: colorToHex(context.read<ClassroomProvider>().selectedColor!), // Provide a default or selected color in hex format
+                                      comments: [],
+                                      createdByRef: FirebaseFirestore.instance.doc('users/${context.read<UserProvider>().currentUser!.userId}'),
+                                      createdAt: DateTime.now(),
+                                      updatedAt: DateTime.now(),
+                                    ),
+                                  );
                         }
                       },
-                      // widget.post != null
-                      //     ? context.read<CategoryProvider>().updateCategory(
-                      //           context,
-                      //           widget.post!,
-                      //         )
+
                       //     : context.read<CategoryProvider>().addCategory(
                       //           context,
                       //           CategoryModel(
@@ -256,13 +273,13 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Invite users", style: TextStyle(fontSize: 14)),
+        const Text("Invite Users", style: TextStyle(fontSize: 14)),
         const SizedBox(height: 10.0),
         DropdownSearch<UserModel>.multiSelection(
           dropdownBuilder: (context, selected) {
             context.read<ClassroomProvider>().selectedUsers = selected;
             return Text(
-              "Select users",
+              "Select Users",
               textAlign: TextAlign.start,
               style: TextStyle(height: 1.5, fontSize: 14.0, color: Theme.of(context).hintColor),
             );
@@ -304,6 +321,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                   ),
                   hintText: "Search for a user")),
           popupProps: PopupPropsMultiSelection.menu(
+            searchDelay: Duration.zero,
             // showSelectedItems: true,
             menuProps: MenuProps(backgroundColor: Theme.of(context).colorScheme.surface),
             onItemAdded: (l, s) => context.read<ClassroomProvider>().handleCheckBoxState(
@@ -376,13 +394,80 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
         ),
         if (context.read<ClassroomProvider>().selectedUsers.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.only(left: 8.0, top: 8.0, right: 8.0),
             child: Text(
               "${context.read<ClassroomProvider>().selectedUsers.length} selected user(s)",
               style: TextStyle(fontSize: 14, color: Theme.of(context).hintColor),
             ),
           )
       ],
+    );
+  }
+
+  Widget colorPickerWidget() {
+    return PopupMenuButton<String>(
+      constraints: const BoxConstraints(maxWidth: 460),
+      tooltip: "",
+      offset: const Offset(0, 60),
+      padding: EdgeInsets.zero,
+      itemBuilder: (ctx) => [
+        PopupMenuItem<String>(
+            enabled: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 10.0,
+                  runSpacing: 10.0,
+                  children: colorOptions.map((color) {
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(60),
+                      onTap: () {
+                        context.read<ClassroomProvider>().updateSelectedColor(color);
+                        Navigator.pop(ctx); // Close the popup
+                      },
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black12, width: 1),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ))
+      ],
+      child: Container(
+          alignment: const AlignmentDirectional(-1, 0),
+          padding: const EdgeInsetsDirectional.only(start: 12, end: 8),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xffD3D7DB))),
+          height: 50,
+          width: double.infinity,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Pick a color for classroom thumbnail",
+                  style: TextStyle(color: Theme.of(context).hintColor, fontSize: 14),
+                ),
+              ),
+              Container(
+                width: 30,
+                height: 30,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  color: context.watch<ClassroomProvider>().selectedColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black12, width: 1),
+                ),
+              ),
+              const Icon(Icons.arrow_drop_down)
+            ],
+          )),
     );
   }
 }

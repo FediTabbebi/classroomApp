@@ -32,11 +32,7 @@ class SideBarWidget extends StatelessWidget {
     return Row(
       children: [
         SideMenu(
-          backgroundColor: context.watch<ThemeProvider>().isDarkMode
-              ? const Color(0xff1D1D22)
-              : context.read<ThemeProvider>().isDarkMode
-                  ? const Color(0xff1D1D22)
-                  : const Color(0xffFDFDFD),
+          backgroundColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff1D1D22) : Theme.of(context).cardTheme.color,
           hasResizer: false,
           hasResizerToggle: false,
           maxWidth: 300,
@@ -58,6 +54,8 @@ class SideBarWidget extends StatelessWidget {
                             cursorHeight: 17.5,
                             style: const TextStyle(fontSize: 14.0),
                             decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Theme.of(context).cardTheme.color,
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: const BorderSide(width: 1, color: Themes.primaryColor),
