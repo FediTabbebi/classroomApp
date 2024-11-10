@@ -1,36 +1,33 @@
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/category_model.dart';
-import 'package:classroom_app/model/post_model.dart';
+import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/model/user_model.dart';
-import 'package:classroom_app/service/post_service.dart';
+import 'package:classroom_app/service/classroom_service.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/src/widget/loading_progress_dialog.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 
-class PostProvider with ChangeNotifier {
-  PostService service = locator<PostService>();
+class ClassroomProvider with ChangeNotifier {
+  ClassroomService service = locator<ClassroomService>();
   UserModel? currentUser;
-  List<CategoryModel>? categoriesList = [];
-  List<CategoryModel>? filteredCategories = [];
 
   String fliterQuery = "";
 
-  final TextEditingController postDescriptionController = TextEditingController();
-  final TextEditingController postCategoryController = TextEditingController();
-  final GlobalKey<FormState> postFormKey = GlobalKey<FormState>();
+  final TextEditingController classroomLabelController = TextEditingController();
+  final GlobalKey<FormState> classRoomFormKey = GlobalKey<FormState>();
   bool isSelectFromAllCategories = false;
   bool? updating;
-  CategoryModel? selectedCategory;
 
-  final postMultiKey = GlobalKey<DropdownSearchState<String>>();
-  final GlobalKey<DropdownSearchState<String>> popupBuilderKey = GlobalKey<DropdownSearchState<String>>();
+  final classRoomMultiKey = GlobalKey<DropdownSearchState<String>>();
 
-  bool? popupBuilderSelection = false;
-  List<CategoryModel> allCategories = [];
+  List<UserModel> selectedUsers = [];
+  bool? usersPopupBuilderSelection = false;
+  final usersPopupBuilderKey = GlobalKey<DropdownSearchState<String>>();
 
-  void handleCheckBoxState({bool updateState = true}) {
+  final usersKey = GlobalKey<DropdownSearchState<UserModel>>();
+
+  void handleCheckBoxState({bool updateState = true, required GlobalKey<DropdownSearchState<String>> popupBuilderKey, required bool? popupBuilderSelection}) {
     var selectedItem = popupBuilderKey.currentState?.popupGetSelectedItems ?? [];
     var isAllSelected = popupBuilderKey.currentState?.popupIsAllItemSelected ?? false;
     popupBuilderSelection = selectedItem.isEmpty ? false : (isAllSelected ? true : null);
@@ -38,7 +35,7 @@ class PostProvider with ChangeNotifier {
     if (updateState) notifyListeners();
   }
 
-  Future<void> addPost(BuildContext context, PostModel post) async {
+  Future<void> addClassroom(BuildContext context, ClassroomModel classroom) async {
     BuildContext? dialogContext;
     showDialog<void>(
         //  barrierColor: Colors.transparent,
@@ -47,11 +44,11 @@ class PostProvider with ChangeNotifier {
         builder: (BuildContext cxt) {
           dialogContext = cxt;
           return const LoadingProgressDialog(
-            title: "Adding new Post",
+            title: "Adding new classroom",
             content: "processing ...",
           );
         });
-    await service.addPost(post).then((value) async {
+    await service.addClassroom(classroom).then((value) async {
       Navigator.of(dialogContext!).pop();
       Navigator.of(context).pop();
     }).onError((error, stackTrace) {
@@ -100,7 +97,7 @@ class PostProvider with ChangeNotifier {
   //   }
   // }
 
-  Future<void> deletePost(BuildContext context, String postId) async {
+  Future<void> deleteClassroom(BuildContext context, String postId) async {
     BuildContext? dialogContext;
     showDialog<void>(
         //  barrierColor: Colors.transparent,
@@ -109,11 +106,11 @@ class PostProvider with ChangeNotifier {
         builder: (BuildContext cxt) {
           dialogContext = cxt;
           return const LoadingProgressDialog(
-            title: "Deleting post",
+            title: "Deleting classroom",
             content: "processing ...",
           );
         });
-    await service.deletePost(postId).then((value) async {
+    await service.deleteclassroom(postId).then((value) async {
       Navigator.of(dialogContext!).pop();
     }).onError((error, stackTrace) {
       Navigator.of(dialogContext!).pop();
@@ -184,8 +181,33 @@ class PostProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void selectUsers(List<UserModel> users) {
+    selectedUsers = users;
+    notifyListeners();
+  }
+
   void clearControllers() {
-    postDescriptionController.clear();
-    postDescriptionController.clear();
+    classroomLabelController.clear();
+    selectedUsers.clear();
+  }
+
+  void addNewUsers(
+    List<UserModel> newValue,
+  ) {
+    selectedUsers = [];
+
+    selectedUsers.addAll(newValue);
+
+    notifyListeners();
+  }
+
+  void deleteUser(int index) {
+    selectedUsers.removeAt(index);
+    notifyListeners();
+  }
+
+  void initControllers(ClassroomModel classroom) {
+    classroomLabelController.text = classroom.label;
+    selectedUsers = classroom.invitedUsers!;
   }
 }

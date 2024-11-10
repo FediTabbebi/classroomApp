@@ -34,6 +34,7 @@ class UpdateUserProvider extends ChangeNotifier {
   Uint8List? imageData;
   File? userCreationImg;
   File? imageDataMobile;
+
   String? selectedUserRole;
 
   final userRoleMultiKey = GlobalKey<DropdownSearchState<String>>();
@@ -42,6 +43,7 @@ class UpdateUserProvider extends ChangeNotifier {
   bool? popupBuilderSelection = false;
   List<String> userRole = [
     'Admin',
+    'Instructor',
     'User',
   ];
 
@@ -147,63 +149,70 @@ class UpdateUserProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> createNewUser(UserModel user, BuildContext context, GlobalKey<FormState> formKey, File? img) async {
-    if (formKey.currentState!.validate()) {
-      BuildContext? dialogContext;
-      showDialog<void>(
-          //  barrierColor: Colors.transparent,
-          barrierDismissible: false,
-          context: context,
-          builder: (BuildContext cxt) {
-            dialogContext = cxt;
-            return const LoadingProgressDialog(
-              title: "Adding new user",
-              content: "Processing ...",
-            );
-          });
-      if (img != null) {
-        await storage.uploadImage(img.readAsBytesSync(), '${user.firstName}-${user.lastName}', 'Profile Images').then((value) async {
-          imageURL = value;
-          return await authService.registerUser(user: user, profilePicture: imageURL).then((value) async {
-            await context.read<UserProvider>().getUsersAsFuture(context).then((value) {
-              isLoading = false;
-              clearControllers();
-              notifyListeners();
-              Navigator.of(dialogContext!).pop();
-              Navigator.of(context).pop();
-            });
-          }).onError((error, stackTrace) {
-            Navigator.of(dialogContext!).pop();
-
-            String errorMessage;
-            if (error is FirebaseAuthException) {
-              errorMessage = ExceptionHandler.getFirebaseErrorMessage(error);
-              showingDialog(context, "An an error has occured\nwhile creating user", errorMessage);
-            }
-          });
-        }).onError((error, stackTrace) {
-          Navigator.of(dialogContext!).pop();
-          String errorMessage;
-          if (error is FirebaseAuthException) {
-            errorMessage = ExceptionHandler.getFirebaseErrorMessage(error);
-            showingDialog(context, "An an error has occured\nwhile uploading picture", errorMessage);
-          }
+  Future<void> createNewUser(UserModel user, BuildContext context, File? img) async {
+    BuildContext? dialogContext;
+    showDialog<void>(
+        //  barrierColor: Colors.transparent,
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext cxt) {
+          dialogContext = cxt;
+          return const LoadingProgressDialog(
+            title: "Adding new user",
+            content: "Processing ...",
+          );
         });
-      } else {
-        await authService.registerUser(user: user).then((value) async {
-          Navigator.of(dialogContext!).pop();
-          Navigator.of(context).pop();
-          clearControllers();
-          notifyListeners();
+    if (img != null) {
+      await storage.uploadImage(imageData!, '${user.firstName}-${user.lastName}', 'Profile Images').then((value) async {
+        imageURL = value;
+        return await authService.registerUser(user: user, profilePicture: imageURL).then((value) async {
+          await context.read<UserProvider>().getUsersAsFuture(context).then((allUser) {
+            isLoading = false;
+            context.read<UserProvider>().userModelList = allUser;
+            context.read<UserProvider>().userManagementDataSource!.updateDataGridSource();
+            context.read<UserProvider>().notifierProvider();
+            clearControllers();
+            notifyListeners();
+            Navigator.of(dialogContext!).pop();
+            Navigator.of(context).pop();
+          });
         }).onError((error, stackTrace) {
           Navigator.of(dialogContext!).pop();
+
           String errorMessage;
           if (error is FirebaseAuthException) {
             errorMessage = ExceptionHandler.getFirebaseErrorMessage(error);
             showingDialog(context, "An an error has occured\nwhile creating user", errorMessage);
           }
         });
-      }
+      }).onError((error, stackTrace) {
+        Navigator.of(dialogContext!).pop();
+        String errorMessage;
+        if (error is FirebaseAuthException) {
+          errorMessage = ExceptionHandler.getFirebaseErrorMessage(error);
+          showingDialog(context, "An an error has occured\nwhile uploading picture", errorMessage);
+        }
+      });
+    } else {
+      await authService.registerUser(user: user).then((value) async {
+        await context.read<UserProvider>().getUsersAsFuture(context).then((value) {
+          context.read<UserProvider>().userModelList = value;
+          context.read<UserProvider>().userManagementDataSource!.updateDataGridSource();
+          context.read<UserProvider>().notifierProvider();
+          isLoading = false;
+          clearControllers();
+          notifyListeners();
+          Navigator.of(dialogContext!).pop();
+          Navigator.of(context).pop();
+        });
+      }).onError((error, stackTrace) {
+        Navigator.of(dialogContext!).pop();
+        String errorMessage;
+        if (error is FirebaseAuthException) {
+          errorMessage = ExceptionHandler.getFirebaseErrorMessage(error);
+          showingDialog(context, "An an error has occured\nwhile creating user", errorMessage);
+        }
+      });
     }
   }
 
@@ -233,7 +242,10 @@ class UpdateUserProvider extends ChangeNotifier {
             updatedAt: DateTime.now(),
             isDeleted: user.isDeleted ? false : true))
         .then((value) async {
-      await context.read<UserProvider>().getUsersAsFuture(context).then((value) => Navigator.of(dialogContext!).pop());
+      await context.read<UserProvider>().getUsersAsFuture(context).then((value) {
+        context.read<UserProvider>().notifierProvider();
+        Navigator.of(dialogContext!).pop();
+      });
     }).onError((error, stackTrace) {
       Navigator.of(dialogContext!).pop();
       showingDialog(context, 'Fail', 'An error has occured while updating user');
@@ -249,26 +261,21 @@ class UpdateUserProvider extends ChangeNotifier {
         if (kDebugMode) {
           print('No image selected.');
         }
-      }
-
-      if (!kIsWeb) {
-        final imageFile = file;
+      } else {
         if (kDebugMode) {
           print(' image selected.');
         }
         if (isRegister) {
-          imageDataMobile = File(imageFile!.path);
+          imageDataMobile = File(file.path);
+          imageData = await file.readAsBytes();
         } else {
-          userCreationImg = File(imageFile!.path);
+          userCreationImg = File(file.path);
+          imageData = await file.readAsBytes();
         }
 
-        if (kDebugMode) {
-          print(imageFile.path);
-        }
-        notifyListeners();
-      } else {
-        imageData = await file?.readAsBytes();
-
+        // if (kDebugMode) {
+        //   print(imageFile.path);
+        // }
         notifyListeners();
       }
     } catch (e) {
@@ -278,7 +285,7 @@ class UpdateUserProvider extends ChangeNotifier {
 
   void removeImg(bool isRegister) {
     isRegister ? imageDataMobile = null : userCreationImg = null;
-
+    imageData = null;
     notifyListeners();
   }
 
@@ -346,42 +353,40 @@ class UpdateUserProvider extends ChangeNotifier {
   /////////////////////////////////////////////////////////////////////
 
   void updateUser(BuildContext context, UserModel user, File? userImg) async {
-    if (createUserFormKey.currentState!.validate()) {
-      if (verifyFieldsWithRole(user) && userImg == null) {
-        showingDialog(context, "No Changes Detected", "Please make sure to modify at least one field before attempting to update.");
+    if (verifyFieldsWithRole(user) && userImg == null) {
+      showingDialog(context, "No Changes Detected", "Please make sure to modify at least one field before attempting to update.");
+    } else {
+      BuildContext? dialogContext;
+      showDialog<void>(
+          //  barrierColor: Colors.transparent,
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext cxt) {
+            dialogContext = cxt;
+            return const LoadingProgressDialog(
+              title: "Updating user",
+              content: "processing ...",
+            );
+          });
+      if (userImg != null) {
+        await adminupdateUserAndUploadImage(context, imageData!, user).then((value) {
+          Navigator.of(dialogContext!).pop();
+          Navigator.of(context).pop();
+        }).onError((error, stackTrace) {
+          Navigator.of(context).pop();
+          showingDialog(context, 'Error', 'An error has occured');
+        });
       } else {
-        BuildContext? dialogContext;
-        showDialog<void>(
-            //  barrierColor: Colors.transparent,
-            barrierDismissible: false,
-            context: context,
-            builder: (BuildContext cxt) {
-              dialogContext = cxt;
-              return const LoadingProgressDialog(
-                title: "Updating user",
-                content: "processing ...",
-              );
-            });
-        if (userImg != null) {
-          await adminupdateUserAndUploadImage(context, userImg.readAsBytesSync(), user).then((value) {
-            Navigator.of(dialogContext!).pop();
-            Navigator.of(context).pop();
-          }).onError((error, stackTrace) {
-            Navigator.of(context).pop();
-            showingDialog(context, 'Error', 'An error has occured');
-          });
-        } else {
-          adminUpdateUserWithoutUploadingImage(
-            context,
-            user,
-          ).then((value) {
-            Navigator.of(dialogContext!).pop();
-            Navigator.of(context).pop();
-          }).onError((error, stackTrace) {
-            Navigator.of(context).pop();
-            showingDialog(context, 'Error', 'An error has occured');
-          });
-        }
+        adminUpdateUserWithoutUploadingImage(
+          context,
+          user,
+        ).then((value) {
+          Navigator.of(dialogContext!).pop();
+          Navigator.of(context).pop();
+        }).onError((error, stackTrace) {
+          Navigator.of(context).pop();
+          showingDialog(context, 'Error', 'An error has occured');
+        });
       }
     }
   }
@@ -404,6 +409,9 @@ class UpdateUserProvider extends ChangeNotifier {
             isDeleted: user.isDeleted))
         .then((value) async {
       await context.read<UserProvider>().getUsersAsFuture(context).then((value) async {
+        context.read<UserProvider>().userModelList = value;
+        context.read<UserProvider>().userManagementDataSource!.updateDataGridSource();
+        context.read<UserProvider>().notifierProvider();
         clearControllers();
       });
     });
@@ -431,8 +439,22 @@ class UpdateUserProvider extends ChangeNotifier {
               updatedAt: DateTime.now(),
               isDeleted: user.isDeleted))
           .then((value) async {
-        await context.read<UserProvider>().getUsersAsFuture(context).then((value) {});
+        await context.read<UserProvider>().getUsersAsFuture(context).then((value) {
+          context.read<UserProvider>().userModelList = value;
+          context.read<UserProvider>().userManagementDataSource!.updateDataGridSource();
+          context.read<UserProvider>().notifierProvider();
+        });
       });
     });
+  }
+
+  void onExitReinitControllers(BuildContext context) {
+    final user = context.read<UserProvider>().currentUser!;
+    firstNameController.text = user.firstName;
+    lastNameController.text = user.lastName;
+    emailController.text = user.email;
+    imageDataMobile = null;
+    imageData = null;
+    notifyListeners();
   }
 }

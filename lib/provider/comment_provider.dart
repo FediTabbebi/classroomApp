@@ -1,6 +1,6 @@
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/post_model.dart';
-import 'package:classroom_app/service/post_service.dart';
+import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/service/classroom_service.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/src/widget/loading_progress_widget.dart';
 import 'package:flutter/material.dart';
@@ -8,16 +8,16 @@ import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 import 'package:go_router/go_router.dart';
 
 class CommentProvider with ChangeNotifier {
-  PostService service = locator<PostService>();
+  ClassroomService service = locator<ClassroomService>();
   final GlobalKey<FormState> commentFormKey = GlobalKey<FormState>();
   final TextEditingController postCommentController = TextEditingController();
 
   bool isAddingComment = false;
-  Future<void> addComment(BuildContext context, PostModel post) async {
+  Future<void> addComment(BuildContext context, ClassroomModel post) async {
     isAddingComment = true;
     notifyListeners();
     postCommentController.clear();
-    await service.updatePost(post).then((value) async {
+    await service.updateClassroom(post).then((value) async {
       isAddingComment = false;
       notifyListeners();
     }).onError((error, stackTrace) {
@@ -32,7 +32,7 @@ class CommentProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updatePost(BuildContext context, PostModel post, int index) async {
+  Future<void> updatePost(BuildContext context, ClassroomModel post, int index) async {
     BuildContext? dialogContext;
     showAnimatedDialog<void>(
         animationType: DialogTransitionType.scale,
@@ -53,7 +53,7 @@ class CommentProvider with ChangeNotifier {
       }
     }
 
-    await service.updatePost(post).then((value) async {
+    await service.updateClassroom(post).then((value) async {
       Navigator.of(dialogContext!).pop();
 
       context.pushNamed("myPostDetails", extra: index); //  notifyListeners();

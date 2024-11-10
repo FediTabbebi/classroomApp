@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:classroom_app/model/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -30,7 +31,7 @@ class AdminUserManagementService {
   Future<List<UserModel>> getUsers() async {
     List<UserModel> usersList = [];
     try {
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').get();
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').orderBy('createdAt', descending: true).get();
       for (var doc in querySnapshot.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         usersList.add(UserModel.fromMap(data));

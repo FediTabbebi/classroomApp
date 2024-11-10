@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/update_user_provider.dart';
 import 'package:classroom_app/src/widget/elevated_button_widget.dart';
 import 'package:classroom_app/utils/helper.dart';
@@ -165,45 +166,50 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
                     const SizedBox(height: 5.0),
                     Container(
                       constraints: const BoxConstraints(minHeight: 40, maxHeight: 60),
-                      child: DropdownSearch<String>(
-                        dropdownDecoratorProps: DropDownDecoratorProps(
-                            baseStyle: const TextStyle(fontSize: 12),
-                            dropdownSearchDecoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                isDense: true,
-                                errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 1), borderRadius: BorderRadius.circular(5.0)),
-                                enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffD3D7DB), width: 1), borderRadius: BorderRadius.circular(5.0)),
-                                focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xff6C4796), width: 1), borderRadius: BorderRadius.circular(5.0)),
-                                focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xff6C4796), width: 1), borderRadius: BorderRadius.circular(5.0)),
-                                fillColor: Theme.of(context).cardTheme.color,
-                                errorStyle: const TextStyle(
-                                  height: 1,
-                                  fontSize: 12,
-                                ),
-                                hintStyle: const TextStyle(
-                                  height: 1,
-                                  fontSize: 12,
-                                ),
-                                hintText: "User role")),
-                        key: context.read<UpdateUserProvider>().userRoleMultiKey,
-                        items: context.read<UpdateUserProvider>().userRole,
-                        onChanged: (value) {
-                          context.read<UpdateUserProvider>().selectedUserRole = value;
-                        },
-                        selectedItem: widget.user?.role,
-                        validator: (value) => validateEmptyFieldWithResponse(value, "Please select user role"),
-                        popupProps: PopupProps.menu(
-                          itemBuilder: (context, item, isSelected) {
-                            return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                item,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            );
-                          },
-                          constraints: BoxConstraints.tight(const Size(double.infinity, 70)),
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          DropdownSearch<String>(
+                            dropdownDecoratorProps: DropDownDecoratorProps(
+                                baseStyle: const TextStyle(fontSize: 12),
+                                dropdownSearchDecoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    isDense: true,
+                                    errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 1), borderRadius: BorderRadius.circular(5.0)),
+                                    enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffD3D7DB), width: 1), borderRadius: BorderRadius.circular(5.0)),
+                                    focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xff6C4796), width: 1), borderRadius: BorderRadius.circular(5.0)),
+                                    focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xff6C4796), width: 1), borderRadius: BorderRadius.circular(5.0)),
+                                    fillColor: Theme.of(context).cardTheme.color,
+                                    errorStyle: const TextStyle(
+                                      height: 1,
+                                      fontSize: 12,
+                                    ),
+                                    hintStyle: const TextStyle(
+                                      height: 1,
+                                      fontSize: 12,
+                                    ),
+                                    hintText: "User role")),
+                            items: context.read<UpdateUserProvider>().userRole,
+                            key: context.read<UpdateUserProvider>().userRoleMultiKey,
+                            validator: (value) => validateEmptyFieldWithResponse(value, "Please select user role"),
+                            onChanged: (value) {
+                              context.read<UpdateUserProvider>().selectedUserRole = value;
+                            },
+                            selectedItem: widget.user?.role,
+                            popupProps: PopupProps.menu(
+                              itemBuilder: (context, item, isSelected) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    item,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                );
+                              },
+                              constraints: BoxConstraints.tight(const Size(double.infinity, 70)),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(
@@ -216,9 +222,11 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
                         height: 40,
                         radius: 5,
                         onPressed: () {
-                          widget.user != null
-                              ? context.read<UpdateUserProvider>().updateUser(context, widget.user!, context.read<UpdateUserProvider>().userCreationImg)
-                              : context.read<UpdateUserProvider>().createNewUser(
+                          if (context.read<UpdateUserProvider>().createUserFormKey.currentState!.validate()) {
+                            if (widget.user != null) {
+                              context.read<UpdateUserProvider>().updateUser(context, widget.user!, context.read<UpdateUserProvider>().userCreationImg);
+                            } else {
+                              context.read<UpdateUserProvider>().createNewUser(
                                   UserModel(
                                       userId: '',
                                       firstName: context.read<UpdateUserProvider>().firstNameController.text,
@@ -231,8 +239,9 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
                                       updatedAt: DateTime.now(),
                                       isDeleted: false),
                                   context,
-                                  context.read<UpdateUserProvider>().createUserFormKey,
                                   context.read<UpdateUserProvider>().userCreationImg);
+                            }
+                          }
                         },
                         text: widget.user != null ? 'Update' : 'Add',
                         fontSize: 12,
@@ -333,20 +342,20 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
             height: 7.5,
           ),
           InkWell(
-            onTap: context.read<UpdateUserProvider>().userCreationImg != null
+            onTap: !emptyImagePickerChecker()
                 ? null
                 : () {
                     context.read<UpdateUserProvider>().pickImage(false);
                   },
             child: (widget.user != null)
-                ? widget.user!.profilePicture.isNotEmpty && context.watch<UpdateUserProvider>().userCreationImg == null
+                ? widget.user!.profilePicture.isNotEmpty && emptyImagePickerChecker()
                     ? Stack(
                         children: [
                           CachedNetworkImage(
                             imageUrl: widget.user!.profilePicture,
                             imageBuilder: (context, imageProvider) => Container(
-                              width: 80,
-                              height: 80,
+                              width: 120,
+                              height: 120,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(5),
                                 image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
@@ -364,14 +373,18 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
                         ],
                       )
                     : Container(
-                        height: 130,
-                        width: 130,
+                        height: 120,
+                        width: 120,
                         decoration: BoxDecoration(
-                            image: context.watch<UpdateUserProvider>().userCreationImg != null
+                            image: !emptyImagePickerChecker()
                                 ? DecorationImage(
-                                    image: FileImage(
-                                      context.read<UpdateUserProvider>().userCreationImg!,
-                                    ),
+                                    image: !platformImageCheckerIsMobile()
+                                        ? MemoryImage(
+                                            context.read<UpdateUserProvider>().imageData!,
+                                          )
+                                        : FileImage(
+                                            context.read<UpdateUserProvider>().userCreationImg!,
+                                          ),
                                     fit: BoxFit.cover)
                                 : null,
                             borderRadius: BorderRadius.circular(5),
@@ -402,25 +415,29 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
                     height: 120,
                     width: 120,
                     decoration: BoxDecoration(
-                        image: context.watch<UpdateUserProvider>().userCreationImg != null
+                        image: !emptyImagePickerChecker()
                             ? DecorationImage(
-                                image: FileImage(
-                                  context.read<UpdateUserProvider>().userCreationImg!,
-                                ),
+                                image: !platformImageCheckerIsMobile()
+                                    ? MemoryImage(
+                                        context.read<UpdateUserProvider>().imageData!,
+                                      )
+                                    : FileImage(
+                                        context.read<UpdateUserProvider>().userCreationImg!,
+                                      ),
                                 fit: BoxFit.cover)
                             : null,
                         borderRadius: BorderRadius.circular(5),
                         border: Border.all(color: const Color(0xffD3D7DB))),
                     child: Stack(
                       children: [
-                        if (context.read<UpdateUserProvider>().userCreationImg != null)
+                        if (!emptyImagePickerChecker())
                           Positioned(
                               top: 0,
                               right: 0,
                               child: iconButton(context, Icons.edit, () {
                                 context.read<UpdateUserProvider>().pickImage(false);
                               }, false)),
-                        if (context.read<UpdateUserProvider>().userCreationImg == null)
+                        if (emptyImagePickerChecker())
                           Align(
                             alignment: Alignment.center,
                             child: Text(
@@ -436,7 +453,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
           const SizedBox(
             height: 5,
           ),
-          if (context.read<UpdateUserProvider>().userCreationImg != null)
+          if (!emptyImagePickerChecker())
             InkWell(
               onTap: () {
                 context.read<UpdateUserProvider>().removeImg(false);
@@ -450,5 +467,19 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateUserDialog> {
         ],
       ),
     );
+  }
+
+  bool emptyImagePickerChecker() {
+    bool isImagePicked = false;
+    if (context.read<AppService>().isMobileDevice) {
+      isImagePicked = context.watch<UpdateUserProvider>().userCreationImg == null;
+    } else {
+      isImagePicked = context.watch<UpdateUserProvider>().imageData == null;
+    }
+    return isImagePicked;
+  }
+
+  bool platformImageCheckerIsMobile() {
+    return context.read<AppService>().isMobileDevice;
   }
 }

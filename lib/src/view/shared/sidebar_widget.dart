@@ -51,7 +51,7 @@ class SideBarWidget extends StatelessWidget {
                     hedearWidget(data, context),
                     if (data.isOpen)
                       Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
+                        padding: const EdgeInsets.only(top: 18, left: 20, right: 20),
                         child: SizedBox(
                           height: 38,
                           child: TextFormField(
@@ -60,10 +60,10 @@ class SideBarWidget extends StatelessWidget {
                             decoration: InputDecoration(
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(width: 0.1, color: Themes.primaryColor),
+                                  borderSide: const BorderSide(width: 1, color: Themes.primaryColor),
                                 ),
-                                enabledBorder: OutlineInputBorder(borderSide: const BorderSide(width: 0.1, color: Color(0xffD3D7DB)), borderRadius: BorderRadius.circular(10)),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1, color: Theme.of(context).highlightColor), borderRadius: BorderRadius.circular(10)),
+                                // contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                                 prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
                                 hintText: "Search",
                                 hintStyle: const TextStyle(fontSize: 14, height: 3.5)),
@@ -115,9 +115,9 @@ class SideBarWidget extends StatelessWidget {
                   if (data.isOpen) const SideMenuItemDataTitle(title: 'Account', padding: EdgeInsetsDirectional.only(start: 10, top: 20, bottom: 15)),
                   ...accountItems.map(
                     (e) => SideMenuItemDataTile(
-                      isSelected: navigationShell.currentIndex == accountItems.indexOf(e) + 3,
+                      isSelected: navigationShell.currentIndex == (context.read<AppService>().userRole == UserType.admin ? (accountItems.indexOf(e) + 2) : (accountItems.indexOf(e) + 2)),
                       onTap: () {
-                        int settingBranchIndex = context.read<AppService>().userRole == UserType.admin ? accountItems.indexOf(e) + 3 : accountItems.indexOf(e) + 3;
+                        int settingBranchIndex = context.read<AppService>().userRole == UserType.admin ? accountItems.indexOf(e) + 2 : accountItems.indexOf(e) + 2;
                         goToBranch(settingBranchIndex);
                       },
                       title: e.name,

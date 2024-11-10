@@ -67,7 +67,7 @@ class RegisterScreen extends StatelessWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: ColoredBox(
-                                color: const Color(0xff1D1D22),
+                                color: context.read<ThemeProvider>().isDarkMode ? const Color(0xff1D1D22) : Themes.secondaryColor.withOpacity(0.1),
                                 child: Image.asset(
                                   AppImages.authImg,
                                   fit: BoxFit.cover,

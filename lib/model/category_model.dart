@@ -1,21 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class CategoryModel {
+class RoleModel {
   String id;
   String label;
 
   DateTime createdAt;
   DateTime updatedAt;
 
-  CategoryModel({
+  RoleModel({
     required this.id,
     required this.label,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  factory CategoryModel.fromMap(Map<String, dynamic> map) {
-    return CategoryModel(
+  factory RoleModel.fromMap(Map<String, dynamic> map) {
+    return RoleModel(
       id: map['id'] ?? '',
       label: map['label'] ?? '',
       createdAt: (map['createdAt'] as Timestamp).toDate(),

@@ -1,8 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:classroom_app/constant/app_images.dart';
 import 'package:classroom_app/model/user_model.dart';
-import 'package:classroom_app/provider/user_provider.dart';
+import 'package:classroom_app/provider/update_user_provider.dart';
+import 'package:classroom_app/src/widget/add_update_user_dialog.dart';
+import 'package:classroom_app/src/widget/loading_indicator_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
@@ -17,7 +20,7 @@ class UserManagementDatasource extends DataGridSource {
   UserManagementDatasource({
     required this.users,
     required this.context,
-    this.rowsPerPage = 10,
+    this.rowsPerPage = 5,
   }) {
     paginatedUsers = users.length < rowsPerPage ? users.getRange(0, users.length).toList(growable: false) : users.getRange(0, rowsPerPage).toList(growable: false);
     buildDataGridRows();
@@ -35,19 +38,44 @@ class UserManagementDatasource extends DataGridSource {
       cells: row.getCells().map<Widget>((dataGridCell) {
         final user = paginatedUsers[dataGridRows.indexOf(row)];
         if (dataGridCell.columnName == 'actions') {
-          return InkWell(
-            onTap: () {
-              selectedUser = context.read<UserProvider>().userModelList.firstWhere((e) => e.userId == user.userId);
-            },
-            child: Container(
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: 20.0),
-              child: Icon(
-                FontAwesomeIcons.ellipsis,
-                size: 16,
-                color: Colors.grey.shade400,
-              ),
-            ),
+          return Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: PopupMenuButton<String>(
+                tooltip: "Options",
+                onSelected: (value) {},
+                itemBuilder: (context) => [
+                      PopupMenuItem<String>(
+                        value: 'Edit',
+                        child: const Text('Edit'),
+                        onTap: () {
+                          showAnimatedDialog<void>(
+                              barrierDismissible: false,
+                              animationType: DialogTransitionType.fadeScale,
+                              duration: const Duration(milliseconds: 300),
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AddOrUpdateUserDialog(
+                                  user: user,
+                                );
+                              });
+                        },
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Ban',
+                        child: Text(
+                          user.isDeleted ? " Unban" : "ban",
+                        ),
+                        onTap: () async {
+                          await context.read<UpdateUserProvider>().banOrUnbanUser(context, user);
+                        },
+                      ),
+                    ],
+                child: Icon(
+                  FontAwesomeIcons.ellipsisVertical,
+                  color: Theme.of(context).highlightColor,
+                  size: 20,
+                )),
           );
         } else if (dataGridCell.columnName == 'user') {
           return Center(
@@ -83,7 +111,10 @@ class UserManagementDatasource extends DataGridSource {
                             height: 20,
                             width: 20,
                             decoration: BoxDecoration(color: Theme.of(context).hoverColor, shape: BoxShape.circle),
-                            child: Center(child: CircularProgressIndicator(value: downloadProgress.progress))),
+                            child: const Center(
+                                child: LoadingIndicatorWidget(
+                              size: 30,
+                            ))),
                         errorWidget: (context, url, error) => Container(
                           height: 50,
                           width: 50,

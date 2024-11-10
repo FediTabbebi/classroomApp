@@ -72,6 +72,13 @@ String? validateEmptyFieldWithResponse(String? value, String responseMessage) {
   return null;
 }
 
+String? validateEmptyListWithResponse(dynamic value, String responseMessage) {
+  if (value == null || value.isEmpty) {
+    return responseMessage;
+  }
+  return null;
+}
+
 String formatDuration(DateTime givenDate) {
   Duration difference = DateTime.now().difference(givenDate);
   if (difference.inDays > 365) {

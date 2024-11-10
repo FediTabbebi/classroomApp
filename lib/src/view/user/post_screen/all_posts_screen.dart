@@ -1,18 +1,15 @@
-import 'package:classroom_app/model/category_model.dart';
-import 'package:classroom_app/provider/category_provider.dart';
-import 'package:classroom_app/src/view/user/post_screen/widget/filter_category_widget.dart';
-import 'package:classroom_app/src/view/user/post_screen/widget/post_listtile_widget.dart';
-import 'package:flutter/material.dart';
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/post_model.dart';
-import 'package:classroom_app/service/post_service.dart';
+import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/service/classroom_service.dart';
+import 'package:classroom_app/src/view/user/post_screen/widget/post_listtile_widget.dart';
 import 'package:classroom_app/src/widget/app_bar_widget.dart';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-class AllPostsScreen extends StatelessWidget {
-  AllPostsScreen({super.key});
-  final PostService service = locator<PostService>();
+class AllClassroomScreen extends StatelessWidget {
+  AllClassroomScreen({super.key});
+  final ClassroomService service = locator<ClassroomService>();
 
   @override
   Widget build(BuildContext context) {
@@ -21,20 +18,9 @@ class AllPostsScreen extends StatelessWidget {
           title: "All Posts ",
           subtitle: "Posts are available here",
           leadingIconData: FontAwesomeIcons.envelopesBulk,
-          actions: [
-            Tooltip(
-              message: "Filter post",
-              child: SizedBox(
-                  width: 90,
-                  height: 80,
-                  child: FilterCategoryWidget(
-                    isAdmin: false,
-                  )),
-            ),
-          ],
         ),
-        body: Consumer2<List<PostModel>?, CategoryProvider>(
-          builder: (context, data, provider, child) {
+        body: Consumer<List<ClassroomModel>?>(
+          builder: (context, data, child) {
             if (data == null) {
               return Column(
                   children: List.generate(
@@ -48,24 +34,16 @@ class AllPostsScreen extends StatelessWidget {
               return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [Text("There is no one posting for the moment")],
+                  children: [Text("There is no classrooms yet")],
                 ),
               );
             } else {
-              List<PostModel> filteredList = filterPostsByCategory(data, provider.userSelectedCategory);
-              if (filteredList.isEmpty) {
-                return const Center(
-                    child: Text(
-                  "There is no post that match this category",
-                  textAlign: TextAlign.center,
-                ));
-              }
               return ListView.separated(
                 shrinkWrap: true,
                 // physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredList.length,
+                itemCount: data.length,
                 itemBuilder: (context, index) {
-                  return PostListTileWidget(post: filteredList[index], createdBy: filteredList[index].createdBy!, index: index);
+                  return PostListTileWidget(classroom: data[index], createdBy: data[index].createdBy!, index: index);
                 },
                 separatorBuilder: (BuildContext context, int index) {
                   return Container(
@@ -77,15 +55,5 @@ class AllPostsScreen extends StatelessWidget {
             }
           },
         ));
-  }
-
-  List<PostModel> filterPostsByCategory(List<PostModel> data, List<CategoryModel> selectedCategories) {
-    if (selectedCategories.isEmpty) {
-      return data;
-    }
-    return data.where((post) {
-      String postCategoryId = post.category.id;
-      return selectedCategories.any((selectedCategory) => selectedCategory.id == postCategoryId);
-    }).toList();
   }
 }

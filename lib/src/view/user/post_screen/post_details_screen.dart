@@ -1,12 +1,10 @@
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/category_model.dart';
+import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/model/comment_model.dart';
-import 'package:classroom_app/model/post_model.dart';
-import 'package:classroom_app/provider/category_provider.dart';
+import 'package:classroom_app/provider/classroom_provider.dart';
 import 'package:classroom_app/provider/comment_provider.dart';
-import 'package:classroom_app/provider/post_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
-import 'package:classroom_app/service/post_service.dart';
+import 'package:classroom_app/service/classroom_service.dart';
 import 'package:classroom_app/src/view/user/post_screen/widget/comment_header_widget.dart';
 import 'package:classroom_app/src/view/user/post_screen/widget/comment_listtile_widget.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
@@ -27,7 +25,7 @@ class PostDetailsScreen extends StatefulWidget {
 
 class _PostDetailsScreenState extends State<PostDetailsScreen> {
   late FocusNode focusNode;
-  final PostService service = locator<PostService>();
+  final ClassroomService service = locator<ClassroomService>();
   final ScrollController _scrollController = ScrollController();
   @override
   void initState() {
@@ -49,7 +47,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<List<PostModel>?>(builder: (context, data, provider) {
+    return Consumer<List<ClassroomModel>?>(builder: (context, data, provider) {
       if (data == null) {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -77,8 +75,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       });
-      List<PostModel> filteredList = filterPostsByCategory(
-          data, context.read<UserProvider>().currentUser!.role == "Admin" ? context.read<CategoryProvider>().adminSelectedCategories : context.read<CategoryProvider>().userSelectedCategory);
+
       return Scaffold(
         body: CustomScrollView(
           controller: _scrollController,
@@ -92,8 +89,8 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
               snap: true,
               floating: true,
               flexibleSpace: CommentHeaderWidget(
-                post: filteredList[widget.index],
-                createdBy: filteredList[widget.index].createdBy!,
+                classroom: data[widget.index],
+                createdBy: data[widget.index].createdBy!,
               ),
             ),
             SliverList(
@@ -102,24 +99,24 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(padding: const EdgeInsets.symmetric(horizontal: 18.0), child: Text(filteredList[widget.index].description)),
+                      Padding(padding: const EdgeInsets.symmetric(horizontal: 18.0), child: Text(data[widget.index].label)),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Align(
                             alignment: Alignment.bottomLeft,
                             child: Text(
-                              "${filteredList[widget.index].comments!.length} comments",
+                              "${data[widget.index].comments!.length} comments",
                               style: TextStyle(fontSize: 14, color: Theme.of(context).hintColor),
                             )),
                       ),
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: filteredList[widget.index].comments!.length,
+                        itemCount: data[widget.index].comments!.length,
                         itemBuilder: (context, index) {
                           return CommentListTileWidget(
-                            comment: filteredList[widget.index].comments![index],
-                            commenter: filteredList[widget.index].comments![index].commentedBy!,
+                            comment: data[widget.index].comments![index],
+                            commenter: data[widget.index].comments![index].commentedBy!,
                           );
                         },
                       ),
@@ -183,9 +180,9 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                               ? null
                               : () async {
                                   if (commentProvider.commentFormKey.currentState!.validate()) {
-                                    List<CommentModel> comments = filteredList[widget.index].comments!;
+                                    List<CommentModel> comments = data[widget.index].comments!;
                                     CommentModel currentComment = CommentModel(
-                                        id: filteredList[widget.index].id + context.read<UserProvider>().currentUser!.userId,
+                                        id: data[widget.index].id + context.read<UserProvider>().currentUser!.userId,
                                         description: commentProvider.postCommentController.text,
                                         commentedByRef: FirebaseFirestore.instance.doc('users/${context.read<UserProvider>().currentUser!.userId}'),
                                         isSeen: widget.isMyListPreview,
@@ -194,13 +191,13 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                     comments.add(currentComment);
                                     await commentProvider.addComment(
                                         context,
-                                        PostModel(
-                                            id: filteredList[widget.index].id,
-                                            category: filteredList[widget.index].category,
-                                            description: filteredList[widget.index].description,
-                                            createdByRef: filteredList[widget.index].createdByRef,
-                                            createdAt: filteredList[widget.index].createdAt,
-                                            updatedAt: filteredList[widget.index].updatedAt,
+                                        ClassroomModel(
+                                            id: data[widget.index].id,
+                                            label: data[widget.index].label,
+                                            colorHex: data[widget.index].colorHex,
+                                            createdByRef: data[widget.index].createdByRef,
+                                            createdAt: data[widget.index].createdAt,
+                                            updatedAt: data[widget.index].updatedAt,
                                             comments: comments));
                                   }
                                 },
@@ -238,7 +235,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                                 isConfirmDialog: true,
                                 onConfirm: () async {
                                   Navigator.pop(context);
-                                  await context.read<PostProvider>().deletePost(context, filteredList[widget.index].id).then((value) => Navigator.of(context).pop());
+                                  await context.read<ClassroomProvider>().deleteClassroom(context, data[widget.index].id).then((value) => Navigator.of(context).pop());
                                 });
                           },
                         );
@@ -261,15 +258,5 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
                 )),
       );
     });
-  }
-
-  List<PostModel> filterPostsByCategory(List<PostModel> data, List<CategoryModel> selectedCategories) {
-    if (selectedCategories.isEmpty) {
-      return data;
-    }
-    return data.where((post) {
-      String postCategoryId = post.category.id;
-      return selectedCategories.any((selectedCategory) => selectedCategory.id == postCategoryId);
-    }).toList();
   }
 }

@@ -14,7 +14,7 @@ class UserProvider with ChangeNotifier {
   List<UserModel> userModelList = [];
   String fliterQuery = "";
 
-  Future<List<UserModel>?> getUsersAsFuture(BuildContext context) async {
+  Future<List<UserModel>> getUsersAsFuture(BuildContext context) async {
     final rslt = await service.getUsers().catchError((error, stackTrace) {
       showingDialog(context, "errors", '$error');
       return error;
@@ -62,5 +62,9 @@ class UserProvider with ChangeNotifier {
     if (withNotifier) {
       notifyListeners();
     }
+  }
+
+  void notifierProvider() {
+    notifyListeners();
   }
 }

@@ -35,12 +35,12 @@ class AppService extends ChangeNotifier {
           currentUser = value;
           userProvider.updateUser(currentUser!, false);
 
-          if (currentUser!.role == "admin") {
+          if (currentUser!.role == "Admin") {
             userRole = UserType.admin;
-            initHomeLocation = "/admin-users-screen";
+            initHomeLocation = "/admin-users-management";
           } else {
             userRole = UserType.user;
-            initHomeLocation = "/user-dashboard";
+            initHomeLocation = "/user-myclassrooms";
           }
         }
       }).onError((error, stackTrace) => currentUser = null);

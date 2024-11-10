@@ -13,8 +13,8 @@ class AdminHomeMain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const List<NavItemModel> menuItems = [
-      NavItemModel(name: 'Dashboard', icon: FontAwesomeIcons.sheetPlastic),
-      NavItemModel(name: 'users', icon: FontAwesomeIcons.users),
+      NavItemModel(name: 'Users', icon: FontAwesomeIcons.users),
+      NavItemModel(name: 'Classrooms', icon: FontAwesomeIcons.sheetPlastic),
     ];
     return SafeArea(
       child: Scaffold(
@@ -38,28 +38,18 @@ class AdminHomeMain extends StatelessWidget {
                       FlashyTabBarItem(
                         activeColor: Theme.of(context).colorScheme.primary,
                         icon: const Icon(FontAwesomeIcons.userGroup),
-                        title: const Text('users'),
+                        title: const Text('Users'),
                       ),
                       FlashyTabBarItem(
                         activeColor: Theme.of(context).colorScheme.primary,
-                        icon: const Icon(Icons.forum),
-                        title: const Text('Forum'),
-                      ),
-                      FlashyTabBarItem(
-                        activeColor: Theme.of(context).colorScheme.primary,
-                        icon: const Icon(FontAwesomeIcons.tags),
-                        title: const Text('Category'),
+                        icon: const Icon(FontAwesomeIcons.sheetPlastic),
+                        title: const Text('classrooms'),
                       ),
                       FlashyTabBarItem(
                         activeColor: Theme.of(context).colorScheme.primary,
                         icon: const Icon(Icons.settings),
-                        title: const Text('Settings'),
+                        title: const Text('settings'),
                       ),
-                      // FlashyTabBarItem(
-                      //   activeColor: Theme.of(context).colorScheme.primary,
-                      //   icon: const Icon(Icons.settings),
-                      //   title: const Text('settings'),
-                      // ),
                     ],
                   ),
                 )

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:classroom_app/constant/app_images.dart';
+import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/update_user_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/widget/app_bar_widget.dart';
@@ -111,7 +112,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget profilePictureWidget(BuildContext context) => Center(
         child: Column(
           children: [
-            context.watch<UpdateUserProvider>().imageDataMobile == null
+            emptyImagePickerChecker()
                 ? SizedBox(
                     height: 150,
                     width: 150,
@@ -124,6 +125,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   width: 150,
                                   height: 150,
                                   decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
                                     image: DecorationImage(
                                         image: AssetImage(
                                           AppImages.userProfile,
@@ -140,6 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     width: 150,
                                     height: 150,
                                     decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
                                       image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
                                     ),
                                   ),
@@ -169,10 +172,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 150,
                           height: 150,
                           decoration: BoxDecoration(
+                            shape: BoxShape.circle,
                             image: DecorationImage(
-                                image: FileImage(
-                                  context.read<UpdateUserProvider>().imageDataMobile!,
-                                ),
+                                image: !platformImageCheckerIsMobile()
+                                    ? MemoryImage(context.read<UpdateUserProvider>().imageData!)
+                                    : FileImage(
+                                        context.read<UpdateUserProvider>().imageDataMobile!,
+                                      ),
                                 fit: BoxFit.cover),
                           ),
                         ),
@@ -242,5 +248,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+
+  bool emptyImagePickerChecker() {
+    bool isImagePicked = false;
+    if (context.read<AppService>().isMobileDevice) {
+      isImagePicked = context.watch<UpdateUserProvider>().imageDataMobile == null;
+    } else {
+      isImagePicked = context.watch<UpdateUserProvider>().imageData == null;
+    }
+    return isImagePicked;
+  }
+
+  bool platformImageCheckerIsMobile() {
+    return context.read<AppService>().isMobileDevice;
   }
 }

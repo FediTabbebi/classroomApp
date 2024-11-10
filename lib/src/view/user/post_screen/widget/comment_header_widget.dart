@@ -1,5 +1,5 @@
 import 'package:classroom_app/constant/app_images.dart';
-import 'package:classroom_app/model/post_model.dart';
+import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/model/user_model.dart';
 import 'package:classroom_app/provider/comment_provider.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
@@ -11,11 +11,11 @@ import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 
 class CommentHeaderWidget extends StatelessWidget {
-  final PostModel post;
+  final ClassroomModel classroom;
 
   final UserModel createdBy;
 
-  const CommentHeaderWidget({required this.post, required this.createdBy, super.key});
+  const CommentHeaderWidget({required this.classroom, required this.createdBy, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +86,7 @@ class CommentHeaderWidget extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          formatDuration(post.createdAt),
+                          formatDuration(classroom.createdAt),
                           softWrap: true,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: Theme.of(ctx).hintColor, fontSize: 12),

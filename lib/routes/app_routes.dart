@@ -1,13 +1,11 @@
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/category_model.dart';
 import 'package:classroom_app/model/user_model.dart';
 import 'package:classroom_app/provider/app_service.dart';
-import 'package:classroom_app/provider/category_provider.dart';
+import 'package:classroom_app/provider/update_user_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/error_page.dart';
 import 'package:classroom_app/src/view/admin/admin_home_main.dart';
-import 'package:classroom_app/src/view/admin/category_management_screen.dart';
-import 'package:classroom_app/src/view/admin/post_management_screen.dart';
+import 'package:classroom_app/src/view/admin/classroom_management_screen.dart';
 import 'package:classroom_app/src/view/admin/user_management/user_management.dart';
 import 'package:classroom_app/src/view/login_screen.dart';
 import 'package:classroom_app/src/view/register_screen.dart';
@@ -15,8 +13,7 @@ import 'package:classroom_app/src/view/shared/edit_profile.dart';
 import 'package:classroom_app/src/view/shared/setting_screen.dart';
 import 'package:classroom_app/src/view/shared/setting_screen_web.dart';
 import 'package:classroom_app/src/view/user/dashboard_screen.dart';
-import 'package:classroom_app/src/view/user/myposts_screen/myposts_screen.dart';
-import 'package:classroom_app/src/view/user/post_screen/all_posts_screen.dart';
+import 'package:classroom_app/src/view/user/myposts_screen/myclassrooms_screen.dart';
 import 'package:classroom_app/src/view/user/post_screen/post_details_screen.dart';
 import 'package:classroom_app/src/view/user/user_home_main.dart';
 import 'package:flutter/material.dart';
@@ -69,8 +66,8 @@ class AppNavigation {
             branches: [
               StatefulShellBranch(routes: <RouteBase>[
                 GoRoute(
-                  name: "admin-users-screen",
-                  path: "/admin-users-screen",
+                  name: "admin-users-management",
+                  path: "/admin-users-management",
                   pageBuilder: (
                     context,
                     state,
@@ -83,13 +80,11 @@ class AppNavigation {
                           onRefresh: () async {
                             await context.read<UserProvider>().getUsersAsFuture(context);
                           },
-                          child: Selector<List<UserModel>?, List<UserModel>?>(
-                              selector: (context, users) => users,
-                              builder: (context, userModelList, child) {
-                                return UserManagementScreen(
-                                  usersList: userModelList,
-                                );
-                              }),
+                          child: Consumer2<UserProvider, List<UserModel>?>(builder: (context, provider, userModelList, child) {
+                            return UserManagementScreen(
+                              usersList: userModelList,
+                            );
+                          }),
                         )),
                     context: context,
                     state: state,
@@ -101,16 +96,17 @@ class AppNavigation {
                   // initialLocation: "/user-dashboard",
                   routes: <RouteBase>[
                     GoRoute(
-                        name: "admin-second-page",
-                        path: "/admin-second-page",
+                        name: "admin-classrooms-management",
+                        path: "/admin-classrooms-management",
                         pageBuilder: (
                           context,
                           state,
                         ) =>
                             buildPageWithDefaultTransition(
-                              child: PostManagementScreen(),
+                              child: CLassroomManagementScreen(),
                               context: context,
                               state: state,
+                              // PostManagementScreen(),
                             ),
                         routes: [
                           GoRoute(
@@ -142,34 +138,34 @@ class AppNavigation {
                           ),
                         ]),
                   ]),
-              StatefulShellBranch(routes: <RouteBase>[
-                GoRoute(
-                  name: "admin-category-screen",
-                  path: "/admin-category-screen",
-                  pageBuilder: (
-                    context,
-                    state,
-                  ) =>
-                      buildPageWithDefaultTransition(
-                    child: FutureProvider<List<CategoryModel>?>(
-                        create: (context) => context.read<CategoryProvider>().getCategoriesAsFuture(context),
-                        initialData: null,
-                        child: Consumer2<CategoryProvider, List<CategoryModel>?>(builder: (context, provider, data, child) {
-                          return CategoryManagementScreen(
-                            provider: provider,
-                            usersList: data,
-                          );
-                        })),
-                    context: context,
-                    state: state,
-                  ),
-                )
-              ]),
+              // StatefulShellBranch(routes: <RouteBase>[
+              //   GoRoute(
+              //     name: "admin-category-screen",
+              //     path: "/admin-category-screen",
+              //     pageBuilder: (
+              //       context,
+              //       state,
+              //     ) =>
+              //         buildPageWithDefaultTransition(
+              //       child: FutureProvider<List<CategoryModel>?>(
+              //           create: (context) => context.read<CategoryProvider>().getCategoriesAsFuture(context),
+              //           initialData: null,
+              //           child: Consumer2<CategoryProvider, List<CategoryModel>?>(builder: (context, provider, data, child) {
+              //             return CategoryManagementScreen(
+              //               provider: provider,
+              //               usersList: data,
+              //             );
+              //           })),
+              //       context: context,
+              //       state: state,
+              //     ),
+              //   )
+              // ]),
               if (appService.isMobileDevice)
                 StatefulShellBranch(routes: <RouteBase>[
                   GoRoute(
-                      name: "admin-setting-Screen",
-                      path: "/admin-setting-Screen",
+                      name: "admin-settings",
+                      path: "/admin-settings",
                       pageBuilder: (
                         context,
                         state,
@@ -192,14 +188,18 @@ class AppNavigation {
                             context: context,
                             state: state,
                           ),
+                          onExit: (context) async {
+                            context.read<UpdateUserProvider>().onExitReinitControllers(context);
+                            return true;
+                          },
                         )
                       ])
                 ]),
               if (!appService.isMobileDevice)
                 StatefulShellBranch(routes: <RouteBase>[
                   GoRoute(
-                      name: "admin-setting-Screen",
-                      path: "/admin-setting-Screen",
+                      name: "admin-settings",
+                      path: "/admin-settings",
                       pageBuilder: (
                         context,
                         state,
@@ -222,6 +222,10 @@ class AppNavigation {
                             context: context,
                             state: state,
                           ),
+                          onExit: (context) async {
+                            context.read<UpdateUserProvider>().onExitReinitControllers(context);
+                            return true;
+                          },
                         )
                       ])
                 ]),
@@ -246,14 +250,14 @@ class AppNavigation {
                   // initialLocation: "/user-dashboard",
                   routes: <RouteBase>[
                     GoRoute(
-                      name: "dashboard",
-                      path: "/user-dashboard",
+                      name: "myclassrooms",
+                      path: "/user-myclassrooms",
                       pageBuilder: (
                         context,
                         state,
                       ) =>
                           buildPageWithDefaultTransition(
-                        child: const UserDashboardScreen(),
+                        child: MyClassroomsScreen(),
                         context: context,
                         state: state,
                       ),
@@ -261,14 +265,14 @@ class AppNavigation {
                   ]),
               StatefulShellBranch(routes: <RouteBase>[
                 GoRoute(
-                    name: "user-second-page",
-                    path: "/user-second-page",
+                    name: "user-myclassroom",
+                    path: "/user-myclassroom",
                     pageBuilder: (
                       context,
                       state,
                     ) =>
                         buildPageWithDefaultTransition(
-                          child: AllPostsScreen(),
+                          child: const UserDashboardScreen(),
                           context: context,
                           state: state,
                         ),
@@ -302,49 +306,49 @@ class AppNavigation {
                       ),
                     ]),
               ]),
-              StatefulShellBranch(routes: <RouteBase>[
-                GoRoute(
-                    name: "myPostScreen",
-                    path: "/user-post-screen",
-                    pageBuilder: (
-                      context,
-                      state,
-                    ) =>
-                        buildPageWithDefaultTransition(
-                          child: MyPostsScreen(),
-                          context: context,
-                          state: state,
-                        ),
-                    routes: [
-                      GoRoute(
-                        name: "myPostDetails",
-                        path: "my-post-details",
-                        pageBuilder: (
-                          context,
-                          state,
-                        ) {
-                          int index = state.extra as int;
-                          return CustomTransitionPage(
-                              key: state.pageKey,
-                              child: PostDetailsScreen(
-                                index: index,
-                                isMyListPreview: true,
-                              ),
-                              transitionDuration: const Duration(milliseconds: 150),
-                              transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
-                                  position: animation.drive(
-                                    Tween<Offset>(
-                                      begin: const Offset(1, 0),
-                                      end: Offset.zero,
-                                    ).chain(CurveTween(curve: Curves.easeInOut)),
-                                  ),
-                                  // textDirection:
-                                  //    leftToRight ? TextDirection.ltr : TextDirection.rtl,
-                                  child: child));
-                        },
-                      ),
-                    ])
-              ]),
+              // StatefulShellBranch(routes: <RouteBase>[
+              //   GoRoute(
+              //       name: "myPostScreen",
+              //       path: "/user-post-screen",
+              //       pageBuilder: (
+              //         context,
+              //         state,
+              //       ) =>
+              //           buildPageWithDefaultTransition(
+              //             child: MyPostsScreen(),
+              //             context: context,
+              //             state: state,
+              //           ),
+              //       routes: [
+              //         GoRoute(
+              //           name: "myPostDetails",
+              //           path: "my-post-details",
+              //           pageBuilder: (
+              //             context,
+              //             state,
+              //           ) {
+              //             int index = state.extra as int;
+              //             return CustomTransitionPage(
+              //                 key: state.pageKey,
+              //                 child: PostDetailsScreen(
+              //                   index: index,
+              //                   isMyListPreview: true,
+              //                 ),
+              //                 transitionDuration: const Duration(milliseconds: 150),
+              //                 transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
+              //                     position: animation.drive(
+              //                       Tween<Offset>(
+              //                         begin: const Offset(1, 0),
+              //                         end: Offset.zero,
+              //                       ).chain(CurveTween(curve: Curves.easeInOut)),
+              //                     ),
+              //                     // textDirection:
+              //                     //    leftToRight ? TextDirection.ltr : TextDirection.rtl,
+              //                     child: child));
+              //           },
+              //         ),
+              //       ])
+              // ]),
               // StatefulShellBranch(routes: <RouteBase>[
               //   GoRoute(
               //     name: "user-fourth-page",
@@ -363,8 +367,8 @@ class AppNavigation {
               if (appService.isMobileDevice)
                 StatefulShellBranch(routes: <RouteBase>[
                   GoRoute(
-                      name: "user-fifth-page",
-                      path: "/user-fifth-page",
+                      name: "user-settings",
+                      path: "/user-settings",
                       pageBuilder: (
                         context,
                         state,
@@ -393,8 +397,8 @@ class AppNavigation {
               if (!appService.isMobileDevice)
                 StatefulShellBranch(routes: <RouteBase>[
                   GoRoute(
-                      name: "user-setting-screen",
-                      path: "/user-setting-screen",
+                      name: "user-settings",
+                      path: "/user-settings",
                       pageBuilder: (
                         context,
                         state,

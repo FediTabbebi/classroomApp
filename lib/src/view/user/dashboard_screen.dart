@@ -1,6 +1,5 @@
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/provider/user/dashboard_provider.dart';
-import 'package:classroom_app/src/view/user/post_screen/all_posts_screen.dart';
 import 'package:classroom_app/src/widget/app_bar_widget.dart';
 import 'package:classroom_app/utils/extension_helper.dart';
 import 'package:flutter/material.dart';
@@ -52,9 +51,12 @@ class UserDashboardScreen extends StatelessWidget {
                     // textDirection: TextDirection.rtl,
                     sizing: StackFit.expand,
                     index: currentIndex - 1,
-                    children: [
-                      AllPostsScreen(),
-                      const SizedBox(
+                    children: const [
+                      SizedBox(
+                        child: Center(child: Text("Chat page")),
+                      ),
+                      //AllPostsScreen(),
+                      SizedBox(
                         child: Center(child: Text("files page")),
                       ),
                     ],

@@ -1,25 +1,24 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:classroom_app/constant/app_images.dart';
-import 'package:classroom_app/model/post_model.dart';
+import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/model/user_model.dart';
-import 'package:classroom_app/provider/post_provider.dart';
+import 'package:classroom_app/provider/classroom_provider.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/utils/helper.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
-import 'package:rich_readmore/rich_readmore.dart';
 
 class PostListTileWidget extends StatelessWidget {
-  final PostModel post;
+  final ClassroomModel classroom;
   final int index;
   final UserModel createdBy;
 
-  const PostListTileWidget({required this.post, required this.createdBy, required this.index, super.key});
+  const PostListTileWidget({required this.classroom, required this.createdBy, required this.index, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +68,7 @@ class PostListTileWidget extends StatelessWidget {
                 subtitle: Row(
                   children: [
                     Text(
-                      "Created based in tunisia - ${formatDuration(post.createdAt)}",
+                      "Created based in tunisia - ${formatDuration(classroom.createdAt)}",
                       softWrap: true,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: Theme.of(ctx).hintColor, fontSize: 12),
@@ -92,7 +91,7 @@ class PostListTileWidget extends StatelessWidget {
                         onSelected: (value) {},
                         itemBuilder: (context) => [
                               PopupMenuItem<String>(
-                                value: 'Report post',
+                                value: 'Report classroom',
                                 onTap: context.read<UserProvider>().currentUser!.role != "Admin"
                                     ? null
                                     : () async {
@@ -101,16 +100,16 @@ class PostListTileWidget extends StatelessWidget {
                                           builder: (BuildContext context) {
                                             return DialogWidget(
                                                 dialogTitle: "Delete confirmation",
-                                                dialogContent: "Are you sure you want to delete this post?",
+                                                dialogContent: "Are you sure you want to delete this classroom?",
                                                 isConfirmDialog: true,
                                                 onConfirm: () async {
                                                   Navigator.pop(context);
-                                                  await context.read<PostProvider>().deletePost(context, post.id);
+                                                  await context.read<ClassroomProvider>().deleteClassroom(context, classroom.id);
                                                 });
                                           },
                                         );
                                       },
-                                child: Text(context.read<UserProvider>().currentUser!.role == "Admin" ? 'Delete post' : 'Report post'),
+                                child: Text(context.read<UserProvider>().currentUser!.role == "Admin" ? 'Delete classroom' : 'Report classroom'),
                               ),
                             ],
                         child: SizedBox(
@@ -125,25 +124,26 @@ class PostListTileWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                child: RichReadMoreText.fromString(
-                  text: post.description,
-                  settings: LengthModeSettings(
-                    trimLength: 205,
-                    trimCollapsedText: 'Show More',
-                    trimExpandedText: ' Show less ',
-                    onPressReadMore: () {
-                      /// specific method to be called on press to show more
-                    },
-                    onPressReadLess: () {
-                      /// specific method to be called on press to show less
-                    },
-                    lessStyle: TextStyle(color: Theme.of(ctx).colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 14),
-                    moreStyle: TextStyle(color: Theme.of(ctx).colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 18.0),
+              //   child: RichReadMoreText.fromString(
+              //     text: classroom.description,
+              //     settings: LengthModeSettings(
+              //       trimLength: 205,
+              //       trimCollapsedText: 'Show More',
+              //       trimExpandedText: ' Show less ',
+              //       onPressReadMore: () {
+              //         /// specific method to be called on press to show more
+              //       },
+              //       onPressReadLess: () {
+              //         /// specific method to be called on press to show less
+              //       },
+              //       lessStyle: TextStyle(color: Theme.of(ctx).colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 14),
+              //       moreStyle: TextStyle(color: Theme.of(ctx).colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 14),
+              //     ),
+              //   ),
+              // ),
+
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Align(
@@ -153,7 +153,7 @@ class PostListTileWidget extends StatelessWidget {
                         context.pushNamed(context.read<UserProvider>().currentUser!.role == "Admin" ? "adminPostPreview" : "postDetails", extra: index);
                       },
                       child: Text(
-                        "${post.comments!.length} comments",
+                        "${classroom.comments!.length} comments",
                         style: TextStyle(fontSize: 14, color: Theme.of(ctx).hintColor),
                       ),
                     )),
