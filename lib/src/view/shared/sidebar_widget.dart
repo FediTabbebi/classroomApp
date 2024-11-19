@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:classroom_app/constant/app_colors.dart';
 import 'package:classroom_app/constant/app_icons.dart';
 import 'package:classroom_app/constant/app_images.dart';
 import 'package:classroom_app/provider/app_service.dart';
@@ -31,138 +32,155 @@ class SideBarWidget extends StatelessWidget {
 
     return Row(
       children: [
-        SideMenu(
-          backgroundColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff1D1D22) : Theme.of(context).cardTheme.color,
-          hasResizer: false,
-          hasResizerToggle: false,
-          maxWidth: 300,
-          minWidth: 67,
-          position: SideMenuPosition.left,
-          controller: controller,
-          builder: (data) {
-            return SideMenuData(
-                header: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    hedearWidget(data, context),
-                    if (data.isOpen)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 18, left: 20, right: 20),
-                        child: SizedBox(
-                          height: 38,
-                          child: TextFormField(
-                            cursorHeight: 17.5,
-                            style: const TextStyle(fontSize: 14.0),
-                            decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Theme.of(context).cardTheme.color,
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(width: 1, color: Themes.primaryColor),
-                                ),
-                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1, color: Theme.of(context).highlightColor), borderRadius: BorderRadius.circular(10)),
-                                // contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                                prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
-                                hintText: "Search",
-                                hintStyle: const TextStyle(fontSize: 14, height: 3.5)),
+        Container(
+          decoration: BoxDecoration(
+              border: context.watch<ThemeProvider>().isDarkMode
+                  ? null
+                  : Border(
+                      right: BorderSide(
+                      color: Theme.of(context).highlightColor,
+                    ))),
+          child: SideMenu(
+            backgroundColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff1D1D22) : Theme.of(context).cardTheme.color,
+            hasResizer: false,
+            hasResizerToggle: false,
+            maxWidth: 300,
+            minWidth: 67,
+            position: SideMenuPosition.left,
+            controller: controller,
+            builder: (data) {
+              return SideMenuData(
+                  header: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      hedearWidget(data, context),
+                      if (data.isOpen)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 18, left: 20, right: 20),
+                          child: SizedBox(
+                            height: 38,
+                            child: TextFormField(
+                              cursorHeight: 17.5,
+                              style: const TextStyle(fontSize: 14.0),
+                              decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Theme.of(context).cardTheme.color,
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(width: 1, color: Themes.primaryColor),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1, color: Theme.of(context).highlightColor), borderRadius: BorderRadius.circular(10)),
+                                  // contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                                  prefixIcon: const Icon(
+                                    Icons.search,
+                                    color: AppColors.darkGrey,
+                                    size: 20,
+                                  ),
+                                  hintText: "Search",
+                                  hintStyle: const TextStyle(
+                                    fontSize: 14,
+                                    height: 3.5,
+                                    color: AppColors.darkGrey,
+                                  )),
+                            ),
                           ),
                         ),
+                      if (data.isOpen)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 10, top: 30, bottom: 15),
+                          child: Text(
+                            "Menu",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        )
+                    ],
+                  ),
+                  items: [
+                    ...menuItems.map(
+                      (e) => SideMenuItemDataTile(
+                        isSelected: navigationShell.currentIndex == menuItems.indexOf(e),
+                        onTap: () => goToBranch(menuItems.indexOf(e)),
+                        title: e.name,
+                        icon: Icon(
+                          e.icon,
+                          size: 20,
+                        ),
+                        hasSelectedLine: true,
+                        borderRadius: BorderRadius.zero,
+                        margin: const EdgeInsetsDirectional.symmetric(vertical: 5),
+                        itemHeight: 42,
+                        highlightSelectedColor: Colors.transparent,
+                        hoverColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff18161A) : const Color(0xffF3F3F3),
+                        selectedLineSize: const Size(5, 60),
+                        titleStyle: const TextStyle(fontSize: 16),
+                        selectedIcon: Icon(
+                          e.icon,
+                          size: 20,
+                          color: Themes.primaryColor,
+                        ),
+                        selectedTitleStyle: const TextStyle(fontSize: 16, color: Themes.primaryColor, fontWeight: FontWeight.w700),
                       ),
+                    ),
                     if (data.isOpen)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 10, top: 30, bottom: 15),
-                        child: Text(
-                          "Menu",
-                          style: TextStyle(fontSize: 16),
+                      SideMenuItemDataDivider(
+                          divider: Divider(
+                            color: Theme.of(context).highlightColor,
+                          ),
+                          padding: const EdgeInsetsDirectional.only(top: 15)),
+                    if (data.isOpen) const SideMenuItemDataTitle(title: 'Account', padding: EdgeInsetsDirectional.only(start: 10, top: 20, bottom: 15)),
+                    ...accountItems.map(
+                      (e) => SideMenuItemDataTile(
+                        isSelected: navigationShell.currentIndex == (context.read<AppService>().userRole == UserType.admin ? (accountItems.indexOf(e) + 2) : (accountItems.indexOf(e) + 1)),
+                        onTap: () {
+                          int settingBranchIndex = context.read<AppService>().userRole == UserType.admin ? accountItems.indexOf(e) + 2 : accountItems.indexOf(e) + 1;
+                          goToBranch(settingBranchIndex);
+                        },
+                        title: e.name,
+                        icon: Icon(
+                          e.icon,
+                          size: 20,
                         ),
-                      )
-                  ],
-                ),
-                items: [
-                  ...menuItems.map(
-                    (e) => SideMenuItemDataTile(
-                      isSelected: navigationShell.currentIndex == menuItems.indexOf(e),
-                      onTap: () => goToBranch(menuItems.indexOf(e)),
-                      title: e.name,
-                      icon: Icon(
-                        e.icon,
-                        size: 20,
+                        hasSelectedLine: true,
+                        borderRadius: BorderRadius.zero,
+                        margin: const EdgeInsetsDirectional.symmetric(
+                          vertical: 5,
+                        ),
+                        itemHeight: 42,
+                        highlightSelectedColor: Colors.transparent,
+                        hoverColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff18161A) : const Color(0xffF3F3F3),
+                        selectedLineSize: const Size(5, 60),
+                        titleStyle: const TextStyle(fontSize: 16),
+                        selectedIcon: Icon(
+                          e.icon,
+                          size: 20,
+                          color: Themes.primaryColor,
+                        ),
+                        selectedTitleStyle: const TextStyle(fontSize: 16, color: Themes.primaryColor, fontWeight: FontWeight.w700),
                       ),
-                      hasSelectedLine: true,
-                      borderRadius: BorderRadius.zero,
-                      margin: const EdgeInsetsDirectional.symmetric(vertical: 5),
-                      itemHeight: 42,
-                      highlightSelectedColor: Colors.transparent,
-                      hoverColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff18161A) : const Color(0xffF3F3F3),
-                      selectedLineSize: const Size(5, 60),
-                      titleStyle: const TextStyle(fontSize: 16),
-                      selectedIcon: Icon(
-                        e.icon,
-                        size: 20,
-                        color: Themes.primaryColor,
-                      ),
-                      selectedTitleStyle: const TextStyle(fontSize: 16, color: Themes.primaryColor, fontWeight: FontWeight.w700),
                     ),
-                  ),
-                  if (data.isOpen)
-                    SideMenuItemDataDivider(
-                        divider: Divider(
-                          color: Theme.of(context).highlightColor,
-                        ),
-                        padding: const EdgeInsetsDirectional.only(top: 15)),
-                  if (data.isOpen) const SideMenuItemDataTitle(title: 'Account', padding: EdgeInsetsDirectional.only(start: 10, top: 20, bottom: 15)),
-                  ...accountItems.map(
-                    (e) => SideMenuItemDataTile(
-                      isSelected: navigationShell.currentIndex == (context.read<AppService>().userRole == UserType.admin ? (accountItems.indexOf(e) + 2) : (accountItems.indexOf(e) + 2)),
+                    SideMenuItemDataTile(
+                      isSelected: navigationShell.currentIndex == 10,
                       onTap: () {
-                        int settingBranchIndex = context.read<AppService>().userRole == UserType.admin ? accountItems.indexOf(e) + 2 : accountItems.indexOf(e) + 2;
-                        goToBranch(settingBranchIndex);
+                        dialogBuilder(context);
                       },
-                      title: e.name,
-                      icon: Icon(
-                        e.icon,
+                      title: "Logout",
+                      icon: const Icon(
+                        FontAwesomeIcons.rightFromBracket,
                         size: 20,
                       ),
-                      hasSelectedLine: true,
                       borderRadius: BorderRadius.zero,
-                      margin: const EdgeInsetsDirectional.symmetric(
-                        vertical: 5,
-                      ),
+                      margin: const EdgeInsetsDirectional.symmetric(vertical: 10),
                       itemHeight: 42,
                       highlightSelectedColor: Colors.transparent,
                       hoverColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff18161A) : const Color(0xffF3F3F3),
                       selectedLineSize: const Size(5, 60),
                       titleStyle: const TextStyle(fontSize: 16),
-                      selectedIcon: Icon(
-                        e.icon,
-                        size: 20,
-                        color: Themes.primaryColor,
-                      ),
                       selectedTitleStyle: const TextStyle(fontSize: 16, color: Themes.primaryColor, fontWeight: FontWeight.w700),
                     ),
-                  ),
-                  SideMenuItemDataTile(
-                    isSelected: navigationShell.currentIndex == 10,
-                    onTap: () {
-                      dialogBuilder(context);
-                    },
-                    title: "Logout",
-                    icon: const Icon(
-                      FontAwesomeIcons.rightFromBracket,
-                      size: 20,
-                    ),
-                    borderRadius: BorderRadius.zero,
-                    margin: const EdgeInsetsDirectional.symmetric(vertical: 10),
-                    itemHeight: 42,
-                    highlightSelectedColor: Colors.transparent,
-                    hoverColor: context.watch<ThemeProvider>().isDarkMode ? const Color(0xff18161A) : const Color(0xffF3F3F3),
-                    selectedLineSize: const Size(5, 60),
-                    titleStyle: const TextStyle(fontSize: 16),
-                    selectedTitleStyle: const TextStyle(fontSize: 16, color: Themes.primaryColor, fontWeight: FontWeight.w700),
-                  ),
-                ],
-                footer: footerWidget(data, context));
-          },
+                  ],
+                  footer: footerWidget(data, context));
+            },
+          ),
         ),
         Expanded(child: navigationShell)
       ],
@@ -190,7 +208,7 @@ class SideBarWidget extends StatelessWidget {
               height: double.maxFinite,
               child: Align(
                   alignment: AlignmentDirectional.center,
-                  child: Image.asset(
+                  child: Image.network(
                     AppIcons.appLogo,
                     height: 30,
                     width: 30,
@@ -279,7 +297,7 @@ class SideBarWidget extends StatelessWidget {
                     ),
                     AutoSizeText(
                       context.watch<UserProvider>().currentUser!.email,
-                      style: TextStyle(color: Theme.of(context).hintColor, fontSize: 12),
+                      style: const TextStyle(color: AppColors.darkGrey, fontSize: 12),
                     ),
                   ],
                 ),

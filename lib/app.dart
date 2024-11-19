@@ -1,6 +1,5 @@
 import 'package:classroom_app/constant/app_icons.dart';
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/classroom_provider.dart';
 import 'package:classroom_app/provider/comment_provider.dart';
@@ -8,10 +7,8 @@ import 'package:classroom_app/provider/login_provider.dart';
 import 'package:classroom_app/provider/register_provider.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/provider/update_user_provider.dart';
-import 'package:classroom_app/provider/user/dashboard_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/routes/app_routes.dart';
-import 'package:classroom_app/service/classroom_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -25,7 +22,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final AppService appService = locator<AppService>();
-  final ClassroomService service = locator<ClassroomService>();
   ValueNotifier<bool?> authResultNotifier = ValueNotifier(null);
 
   @override
@@ -51,18 +47,15 @@ class _MyAppState extends State<MyApp> {
               } else {
                 AppNavigation appNavigation = AppNavigation(initSateLocation: appService.initHomeLocation, userType: appService.userRole);
 
-                return StreamProvider<List<ClassroomModel>?>(
-                    create: (context) => service.getAllClassroomAsStream(context.read<UserProvider>().currentUser!.role, context.read<UserProvider>().currentUser!.userId, context),
-                    initialData: null,
-                    builder: (context, child) => Selector<ThemeProvider, bool>(
-                        selector: (p0, p1) => p1.isDarkMode,
-                        builder: (context, isDarkMode, child) {
-                          return MaterialApp.router(
-                            theme: context.read<ThemeProvider>().getThemeData(),
-                            debugShowCheckedModeBanner: false,
-                            routerConfig: appNavigation.router,
-                          );
-                        }));
+                return Selector<ThemeProvider, bool>(
+                    selector: (p0, p1) => p1.isDarkMode,
+                    builder: (context, isDarkMode, child) {
+                      return MaterialApp.router(
+                        theme: context.read<ThemeProvider>().getThemeData(),
+                        debugShowCheckedModeBanner: false,
+                        routerConfig: appNavigation.router,
+                      );
+                    });
               }
             }));
   }
@@ -77,5 +70,4 @@ List<SingleChildWidget> providers = [
   ChangeNotifierProvider(create: (_) => locator<UpdateUserProvider>()),
   ChangeNotifierProvider(create: (_) => locator<ClassroomProvider>()),
   ChangeNotifierProvider(create: (_) => locator<CommentProvider>()),
-  ChangeNotifierProvider(create: (_) => locator<DashboardProvider>()),
 ];

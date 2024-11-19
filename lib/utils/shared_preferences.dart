@@ -33,7 +33,7 @@ class SharedPrefs {
     await prefs.setString('userId', token);
   }
 
-  void removeUserId() async {
-    prefs.remove('userId');
+  Future<void> removeUserId() async {
+    await prefs.remove('userId');
   }
 }

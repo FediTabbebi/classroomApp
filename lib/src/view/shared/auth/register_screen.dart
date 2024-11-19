@@ -7,6 +7,7 @@ import 'package:classroom_app/src/widget/loading_indicator_widget.dart';
 import 'package:classroom_app/theme/themes.dart';
 import 'package:classroom_app/utils/helper.dart';
 import 'package:classroom_app/utils/responsive_helper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +49,7 @@ class RegisterScreen extends StatelessWidget {
                       ),
                     ),
                     InkWell(
-                        onTap: () => context.read<ThemeProvider>().toggleTheme(),
+                        onTap: () async => await context.read<ThemeProvider>().toggleTheme(),
                         child: Icon(
                           context.watch<ThemeProvider>().isDarkMode ? Icons.dark_mode : Icons.light_mode,
                           size: 28,
@@ -193,6 +194,8 @@ class RegisterScreen extends StatelessWidget {
                                               : ElevatedButtonWidget(
                                                   onPressed: () async {
                                                     FocusScope.of(context).unfocus();
+                                                    DocumentReference roleReference = FirebaseFirestore.instance.collection('roles').doc("3");
+
                                                     context.read<RegisterProvider>().registerUser(
                                                         UserModel(
                                                             userId: '',
@@ -201,7 +204,7 @@ class RegisterScreen extends StatelessWidget {
                                                             email: context.read<RegisterProvider>().emailController.text,
                                                             password: context.read<RegisterProvider>().passwordController.text,
                                                             profilePicture: '',
-                                                            role: 'User',
+                                                            roleRef: roleReference,
                                                             createdAt: DateTime.now(),
                                                             updatedAt: DateTime.now(),
                                                             isDeleted: false),

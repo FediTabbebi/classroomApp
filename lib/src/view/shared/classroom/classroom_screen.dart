@@ -1,8 +1,10 @@
+import 'package:classroom_app/constant/app_colors.dart';
 import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/provider/user_provider.dart';
+import 'package:classroom_app/src/view/shared/classroom/widget/classroom_card_widget.dart';
+import 'package:classroom_app/src/view/shared/classroom/widget/classroom_listitle_widget.dart';
 import 'package:classroom_app/src/widget/add_update_classroom_dialog.dart';
 import 'package:classroom_app/src/widget/app_bar_widget.dart';
-import 'package:classroom_app/src/widget/classroom_card_widget.dart';
-import 'package:classroom_app/src/widget/classroom_listitle_widget.dart';
 import 'package:classroom_app/src/widget/elevated_button_widget.dart';
 import 'package:classroom_app/src/widget/loading_indicator_widget.dart';
 import 'package:classroom_app/theme/themes.dart';
@@ -10,16 +12,17 @@ import 'package:classroom_app/utils/responsive_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-class CLassroomManagementScreen extends StatefulWidget {
-  const CLassroomManagementScreen({super.key});
+class ClassroomScreen extends StatefulWidget {
+  const ClassroomScreen({super.key});
 
   @override
-  State<CLassroomManagementScreen> createState() => _CLassroomManagementScreenState();
+  State<ClassroomScreen> createState() => _ClassroomScreenState();
 }
 
-class _CLassroomManagementScreenState extends State<CLassroomManagementScreen> {
+class _ClassroomScreenState extends State<ClassroomScreen> {
   late TextEditingController searchController;
   @override
   void initState() {
@@ -41,34 +44,40 @@ class _CLassroomManagementScreenState extends State<CLassroomManagementScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-          appBar: AppBarWidget(
-              title: "Classroom Management Hub",
-              subtitle: "classroom management options are available here",
-              leadingIconData: FontAwesomeIcons.sheetPlastic,
-              actions: !ResponsiveWidget.isLargeScreen(context)
-                  ? [
-                      Tooltip(
-                        message: "Add Classroom",
-                        exitDuration: Duration.zero,
-                        child: IconButton(
-                            onPressed: () {
-                              showAnimatedDialog<void>(
-                                  barrierDismissible: false,
-                                  animationType: DialogTransitionType.fadeScale,
-                                  duration: const Duration(milliseconds: 300),
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return const AddOrUpdateClassroomDialog();
-                                  });
-                            },
-                            icon: Icon(
-                              Icons.add,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 30,
-                            )),
-                      )
-                    ]
-                  : null),
+          appBar: context.read<UserProvider>().currentUser!.role!.id != "3"
+              ? AppBarWidget(
+                  title: "Classroom Management Hub",
+                  subtitle: "classroom management options are available here",
+                  leadingIconData: FontAwesomeIcons.sheetPlastic,
+                  actions: !ResponsiveWidget.isLargeScreen(context)
+                      ? [
+                          Tooltip(
+                            message: "Add Classroom",
+                            exitDuration: Duration.zero,
+                            child: IconButton(
+                                onPressed: () {
+                                  showAnimatedDialog<void>(
+                                      barrierDismissible: false,
+                                      animationType: DialogTransitionType.fadeScale,
+                                      duration: const Duration(milliseconds: 300),
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return const AddOrUpdateClassroomDialog();
+                                      });
+                                },
+                                icon: Icon(
+                                  Icons.add,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 30,
+                                )),
+                          )
+                        ]
+                      : null)
+              : const AppBarWidget(
+                  title: "Classroom Hub",
+                  subtitle: "Here you will find all the classrooms you've been invited in",
+                  leadingIconData: FontAwesomeIcons.sheetPlastic,
+                ),
           body: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Column(
@@ -94,9 +103,9 @@ class _CLassroomManagementScreenState extends State<CLassroomManagementScreen> {
                               ),
                               enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1, color: Theme.of(context).highlightColor), borderRadius: BorderRadius.circular(10)),
                               // contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                              prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
+                              prefixIcon: const Icon(Icons.search, color: AppColors.darkGrey),
                               hintText: "Search for a classroom",
-                              hintStyle: const TextStyle(fontSize: 14),
+                              hintStyle: const TextStyle(fontSize: 14, color: AppColors.darkGrey),
                               suffixIcon: searchQuery.isNotEmpty
                                   ? IconButton(
                                       icon: const Icon(
@@ -121,7 +130,7 @@ class _CLassroomManagementScreenState extends State<CLassroomManagementScreen> {
                           ),
                         ),
                       ),
-                      if (ResponsiveWidget.isLargeScreen(context))
+                      if (ResponsiveWidget.isLargeScreen(context) && context.read<UserProvider>().currentUser!.role!.id != "3")
                         Tooltip(
                           message: "Add classroom",
                           exitDuration: Duration.zero,
@@ -187,19 +196,43 @@ class _CLassroomManagementScreenState extends State<CLassroomManagementScreen> {
 
   Widget buildClassroomList(List<ClassroomModel> data, BuildContext context) {
     return ResponsiveWidget.isLargeScreen(context)
-        ? Wrap(
-            spacing: 10.0,
-            runSpacing: 10.0,
-            children: data.map((classroom) {
-              return ClassroomCardWidget(classroom: classroom);
-            }).toList(),
+        ? SingleChildScrollView(
+            child: Wrap(
+              spacing: 1.0,
+              runSpacing: 10.0,
+              children: data.map((classroom) {
+                return ClassroomCardWidget(
+                  classroom: classroom,
+                  onTap: () {
+                    if (context.read<UserProvider>().currentUser!.role!.id == "1") {
+                      context.goNamed("admin-classroom-details", pathParameters: {"classroomId": classroom.id});
+                    } else if (context.read<UserProvider>().currentUser!.role!.id == "2") {
+                      context.goNamed("instructor-classroom-details", pathParameters: {"classroomId": classroom.id});
+                    } else {
+                      context.goNamed("user-classroom-details", pathParameters: {"classroomId": classroom.id});
+                    }
+                  },
+                );
+              }).toList(),
+            ),
           )
         : ListView.separated(
             shrinkWrap: true,
             itemCount: data.length,
             itemBuilder: (context, index) {
               final classroom = data[index];
-              return ClassroomListitleWidget(classroom: classroom);
+              return ClassroomListitleWidget(
+                classroom: classroom,
+                onTap: () {
+                  if (context.read<UserProvider>().currentUser!.role!.id == "1") {
+                    context.goNamed("admin-classroom-details", pathParameters: {"classroomId": classroom.id});
+                  } else if (context.read<UserProvider>().currentUser!.role!.id == "2") {
+                    context.goNamed("instructor-classroom-details", pathParameters: {"classroomId": classroom.id});
+                  } else {
+                    context.goNamed("user-classroom-details", pathParameters: {"classroomId": classroom.id});
+                  }
+                },
+              );
             },
             separatorBuilder: (context, index) {
               return const SizedBox(height: 10);

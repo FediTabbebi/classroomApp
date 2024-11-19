@@ -8,7 +8,8 @@ class ElevatedButtonWidget extends StatelessWidget {
   final double? fontSize;
   final double? height;
   final double? width;
-  const ElevatedButtonWidget({required this.onPressed, required this.text, this.radius, this.fontSize, this.height, this.width, super.key});
+  final IconData? iconData;
+  const ElevatedButtonWidget({required this.onPressed, this.iconData, required this.text, this.radius, this.fontSize, this.height, this.width, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +31,28 @@ class ElevatedButtonWidget extends StatelessWidget {
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(radius ?? 12))),
           onPressed: onPressed,
-          child: Text(
-            text,
-            style: TextStyle(color: Colors.white, fontSize: fontSize ?? 16),
-            textAlign: TextAlign.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (iconData != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Icon(
+                    iconData,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                ),
+              Text(
+                text,
+                style: TextStyle(color: Colors.white, fontSize: fontSize ?? 16),
+                textAlign: TextAlign.center,
+              ),
+              if (iconData != null)
+                const SizedBox(
+                  width: 4,
+                )
+            ],
           ),
         ));
   }

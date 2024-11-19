@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:classroom_app/constant/app_colors.dart';
 import 'package:classroom_app/constant/app_images.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
@@ -108,7 +109,11 @@ class _SettingScreenWebState extends State<SettingScreenWeb> {
                   height: 50,
                   width: 400,
                   onPressed: () {
-                    context.read<UserProvider>().currentUser!.role == 'Admin' ? context.goNamed("adminProfile") : context.goNamed("userEditProfile");
+                    context.goNamed(context.read<UserProvider>().currentUser!.role!.id == "1"
+                        ? "adminProfile"
+                        : context.read<UserProvider>().currentUser!.role!.id == "2"
+                            ? "instructorEditProfile"
+                            : "userEditProfile");
                   },
                   text: "Edit"),
             ),
@@ -121,17 +126,22 @@ class _SettingScreenWebState extends State<SettingScreenWeb> {
                 //overScrollColor: Colors.transparent,
                 children: [
                   SwitchListTile(
+                    dense: true,
                     activeColor: Themes.primaryColor,
                     title: const Text(
                       'Dark Mode',
                     ),
                     value: context.read<ThemeProvider>().isDarkMode,
                     onChanged: (value) async {
-                      context.read<ThemeProvider>().toggleTheme();
+                      await context.read<ThemeProvider>().toggleTheme();
                     },
                     subtitle: Text(
                       context.watch<ThemeProvider>().isDarkMode ? "Tap to change to dark mode" : "Tap to change to light mode",
-                      style: TextStyle(fontWeight: FontWeight.w300, fontSize: 12, color: Theme.of(context).hintColor),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w300,
+                        fontSize: 12,
+                        color: AppColors.darkGrey,
+                      ),
                     ),
                   ),
                   SwitchListTile(
@@ -147,7 +157,11 @@ class _SettingScreenWebState extends State<SettingScreenWeb> {
                     },
                     subtitle: Text(
                       isEnabledNotif ? "Tap to enable app notification" : "Tap to disable app notification",
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300, color: Theme.of(context).hintColor),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300,
+                        color: AppColors.darkGrey,
+                      ),
                     ),
                   ),
                   listTileWidget("Language", "Tap to select app language", const Icon(Icons.arrow_forward_ios), () {}, context),
@@ -171,7 +185,11 @@ class _SettingScreenWebState extends State<SettingScreenWeb> {
       title: Text(title, style: const TextStyle()),
       subtitle: Text(
         subtitle,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300, color: Theme.of(context).hintColor),
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w300,
+          color: AppColors.darkGrey,
+        ),
       ),
       trailing: icon,
       onTap: () {

@@ -1,4 +1,8 @@
+import 'package:classroom_app/locator.dart';
+import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/provider/app_service.dart';
+import 'package:classroom_app/provider/user_provider.dart';
+import 'package:classroom_app/service/classroom_service.dart';
 import 'package:classroom_app/src/view/shared/sidebar_widget.dart';
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +12,8 @@ import 'package:provider/provider.dart';
 
 class UserHomeMain extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
-  const UserHomeMain({required this.navigationShell, super.key});
+  UserHomeMain({required this.navigationShell, super.key});
+  final ClassroomService service = locator<ClassroomService>();
 
   @override
   Widget build(BuildContext context) {
@@ -17,16 +22,24 @@ class UserHomeMain extends StatelessWidget {
     ];
     return SafeArea(
       child: Scaffold(
-          body: !context.read<AppService>().isMobileDevice
-              ? SideBarWidget(
-                  navigationShell: navigationShell,
-                  menuItems: menuItems,
-                )
-              : navigationShell,
+          body: StreamProvider<List<ClassroomModel>?>(
+            create: (context) => service.getAllClassroomAsStream(
+              context.read<UserProvider>().currentUser!.role!.id,
+              context.read<UserProvider>().currentUser!.userId,
+              context,
+            ),
+            initialData: null,
+            child: !context.read<AppService>().isMobileDevice
+                ? SideBarWidget(
+                    navigationShell: navigationShell,
+                    menuItems: menuItems,
+                  )
+                : navigationShell,
+          ),
           bottomNavigationBar: context.read<AppService>().isMobileDevice
               ? Visibility(
-                  visible: (navigationShell.shellRouteContext.routerState.fullPath != "/user-second-page/post-details" &&
-                      navigationShell.shellRouteContext.routerState.fullPath != "/user-post-screen/my-post-details"),
+                  visible: (!navigationShell.shellRouteContext.routerState.fullPath!.contains("instructor-classroom-details/:classroomId") &&
+                      !navigationShell.shellRouteContext.routerState.fullPath!.contains("user-classroom-details/:classroomId")),
                   child: FlashyTabBar(
                     selectedIndex: navigationShell.currentIndex,
                     showElevation: true,

@@ -1,10 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:classroom_app/constant/app_images.dart';
 import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/model/user_model.dart';
-import 'package:classroom_app/provider/comment_provider.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/utils/helper.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ionicons/ionicons.dart';
@@ -32,7 +31,7 @@ class CommentHeaderWidget extends StatelessWidget {
                 IconButton(
                     onPressed: () {
                       context.pop();
-                      context.read<CommentProvider>().postCommentController.clear();
+                      // context.read<CommentProvider>().postCommentController.clear();
                     },
                     icon: const Icon(
                       Icons.arrow_back_ios,

@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CommentModel {
   String id;
-
   String description;
   DocumentReference commentedByRef;
   UserModel? commentedBy;

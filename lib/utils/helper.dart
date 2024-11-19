@@ -69,6 +69,8 @@ String? validateEmptyList(List<dynamic>? value) {
 String? validateEmptyFieldWithResponse(String? value, String responseMessage) {
   if (value == null || value.trim().isEmpty) {
     return responseMessage;
+  } else if (value.trim().length < 3) {
+    return "Enter at least 3 characters";
   }
   return null;
 }
@@ -84,19 +86,19 @@ String formatDuration(DateTime givenDate) {
   Duration difference = DateTime.now().difference(givenDate);
   if (difference.inDays > 365) {
     int years = (difference.inDays / 365).floor();
-    return '$years year${years > 1 ? 's' : ''}';
+    return '$years year${years > 1 ? 's' : ''} ago';
   } else if (difference.inDays > 30) {
     int months = (difference.inDays / 30).floor();
-    return '$months month${months > 1 ? 's' : ''}';
+    return '$months month${months > 1 ? 's' : ''} ago';
   } else if (difference.inDays > 7) {
     int weeks = (difference.inDays / 7).floor();
-    return '$weeks week${weeks > 1 ? 's' : ''}';
+    return '$weeks week${weeks > 1 ? 's' : ''} ago';
   } else if (difference.inDays > 0) {
-    return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''}';
+    return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
   } else if (difference.inHours > 0) {
-    return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''}';
+    return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
   } else if (difference.inMinutes > 0) {
-    return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''}';
+    return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
   } else {
     return 'Just now';
   }

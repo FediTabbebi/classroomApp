@@ -1,4 +1,5 @@
 import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/user_role.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -27,7 +28,7 @@ class AuthenticationServices {
       'lastName': user.lastName,
       'email': user.email,
       'profilePicture': profilePicture,
-      'role': user.role,
+      'roleRef': user.roleRef,
       'birthDate': Timestamp.now(),
       'createdAt': Timestamp.now(),
       'updatedAt': Timestamp.now(),
@@ -37,11 +38,51 @@ class AuthenticationServices {
 
   // #3 get particular user by id
   Future<UserModel?> getCurrentUser(String uid) async {
-    DocumentSnapshot<Map<String, dynamic>> userDocument = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    if (userDocument.exists) {
-      return UserModel.fromMap(userDocument.data()!);
+    try {
+      // Fetch the user document from Firestore
+      DocumentSnapshot<Map<String, dynamic>> userDocument = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      // Check if the user document exists
+      if (userDocument.exists) {
+        // Extract the user data
+        Map<String, dynamic> userData = userDocument.data()!;
+
+        // Fetch the role reference from the user document and check if it's null
+        DocumentReference? roleRef = userData['roleRef'];
+
+        if (roleRef == null) {
+          print("Role reference is null.");
+          return null; // Handle the case where roleRef is null (maybe return null or a default role)
+        }
+
+        // Fetch the role document from the 'roles' collection
+        DocumentSnapshot roleDocument = await roleRef.get();
+
+        // Check if the role document exists
+        if (roleDocument.exists) {
+          // Safely cast the role data to Map<String, dynamic>
+          Map<String, dynamic> roleData = roleDocument.data() as Map<String, dynamic>;
+
+          // Parse the role data into a UserRole object
+          UserRole role = UserRole.fromMap(roleData);
+
+          // Map the user data to UserModel and set the fetched role
+          UserModel user = UserModel.fromMap(userData);
+          user.role = role; // Set the role in the user model
+
+          return user;
+        } else {
+          print("Role document does not exist.");
+          return null; // Role document not found
+        }
+      } else {
+        print("User document does not exist.");
+        return null; // User document not found
+      }
+    } catch (e) {
+      print("Error fetching user: $e");
+      return null; // Return null in case of an error
     }
-    return null;
   }
 
   // #4 get current authenticated user (no id needed)
@@ -56,16 +97,22 @@ class AuthenticationServices {
   }
 
 // #5 update user
-  Future<void> updateUser(UserModel user) async {
+  Future<void> updateUser(UserModel user, String roleId) async {
+    // First, check if the role reference exists in the user model
+
+    // Ensure roleRef is not null
+    DocumentReference roleRef = FirebaseFirestore.instance.collection('roles').doc(roleId);
+
+    // Update the user document in Firestore
     await FirebaseFirestore.instance.collection('users').doc(user.userId).update({
       'userId': user.userId,
       'firstName': user.firstName,
       'lastName': user.lastName,
       'email': user.email,
       'profilePicture': user.profilePicture,
-      'role': user.role,
-      'birthDate': Timestamp.now(),
-      'createdAt': Timestamp.now(),
+      'roleRef': roleRef, // Store the role reference
+      'birthDate': Timestamp.now(), // Assuming you are updating this field
+      'createdAt': Timestamp.now(), // Assuming you are updating this field (can be removed if not needed)
       'updatedAt': Timestamp.now(),
       'isDeleted': user.isDeleted,
     });

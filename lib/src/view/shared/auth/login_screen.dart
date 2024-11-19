@@ -46,7 +46,7 @@ class LoginScreen extends StatelessWidget {
                     //   ),
                     // ),
                     InkWell(
-                        onTap: () => context.read<ThemeProvider>().toggleTheme(),
+                        onTap: () async => await context.read<ThemeProvider>().toggleTheme(),
                         child: Icon(
                           context.watch<ThemeProvider>().isDarkMode ? Icons.dark_mode : Icons.light_mode,
                           size: 28,

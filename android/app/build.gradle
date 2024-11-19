@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.example.classroom_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdkVersion = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -27,8 +27,8 @@ android {
         applicationId = "com.example.classroom_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion 23
-        targetSdk = flutter.targetSdkVersion
+        minSdkVersion 28
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -58,15 +58,15 @@ flutter {
     source = "../.."
 }
 dependencies {
-  // Import the Firebase BoM
-  implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    // Firebase BoM (no version required as dependencies will be handled by the BoM)
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    
+    // Firebase Analytics
+    implementation 'com.google.firebase:firebase-analytics'
 
+    // Firebase Storage
+    implementation 'com.google.firebase:firebase-storage'
 
-  // TODO: Add the dependencies for Firebase products you want to use
-  // When using the BoM, don't specify versions in Firebase dependencies
-  implementation 'com.google.firebase:firebase-analytics'
-
-
-  // Add the dependencies for any other desired Firebase products
-  // https://firebase.google.com/docs/android/setup#available-libraries
+    // Firebase Auth (if used)
+    implementation 'com.google.firebase:firebase-auth'
 }

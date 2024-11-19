@@ -84,33 +84,35 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Align(
-                      alignment: Alignment.topRight,
-                      child: InkWell(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        widget.classroom != null ? "Update Classroom" : "Create Classroom",
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      ),
+                      InkWell(
                         onTap: () {
                           Navigator.of(context).pop();
-                          // context.read<ClassroomProvider>().clearControllers();
                         },
                         child: Icon(
                           size: 20,
                           FontAwesomeIcons.xmark,
                           color: Theme.of(context).hintColor,
                         ),
-                      )),
-                  Text(
-                    widget.classroom != null ? "Update Classroom" : "Create Classroom",
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 26.0),
                   const Text(
                     "Classroom Label",
                     style: TextStyle(fontSize: 14),
                   ),
-                  const SizedBox(height: 10.0),
+                  const SizedBox(height: 10),
                   textFieldWidget(
                       hintText: "Enter classroom label",
                       textEditingController: context.read<ClassroomProvider>().classroomLabelController,
-                      validator: (value) => validateEmptyFieldWithResponse(value!, "classroom label cannot be empty"),
+                      validator: (value) => validateEmptyFieldWithResponse(value!, "Classroom label cannot be empty"),
                       context: context),
                   const SizedBox(height: 10),
                   Consumer<ClassroomProvider>(builder: (context, provider, child) {
@@ -122,26 +124,22 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                   }),
                   const SizedBox(height: 10),
                   const Text(
-                    "Thmubnail Color",
+                    "Thumbnail Color",
                     style: TextStyle(fontSize: 14),
                   ),
                   const SizedBox(height: 10.0),
                   colorPickerWidget(),
-                  const SizedBox(
-                    height: 20,
-                  ),
+                  const SizedBox(height: 20),
                   Align(
                     alignment: Alignment.bottomRight,
                     child: ElevatedButtonWidget(
-                      width: widget.classroom != null ? 75 : 75,
+                      width: 81,
                       height: 40,
                       radius: 5,
                       onPressed: () {
                         if (context.read<ClassroomProvider>().classRoomFormKey.currentState!.validate()) {
                           final List<String> selectedUsers = [];
                           context.read<ClassroomProvider>().selectedUsers.forEach((e) => selectedUsers.add(e.userId));
-
-                          // Check if selectedUsers is not empty and map their IDs to document references
                           List<DocumentReference> invitedUsersRef = [];
                           if (selectedUsers.isNotEmpty) {
                             invitedUsersRef = selectedUsers.map((userId) {
@@ -150,9 +148,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                           }
                           widget.classroom != null
                               ? context.read<ClassroomProvider>().updateClassroom(context, widget.classroom!)
-                              :
-                              // Create the ClassroomModel with all necessary fields
-                              context.read<ClassroomProvider>().addClassroom(
+                              : context.read<ClassroomProvider>().addClassroom(
                                     context,
                                     ClassroomModel(
                                       id: '',
@@ -160,6 +156,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                                       label: context.read<ClassroomProvider>().classroomLabelController.text,
                                       colorHex: colorToHex(context.read<ClassroomProvider>().selectedColor!), // Provide a default or selected color in hex format
                                       comments: [],
+                                      files: [],
                                       createdByRef: FirebaseFirestore.instance.doc('users/${context.read<UserProvider>().currentUser!.userId}'),
                                       createdAt: DateTime.now(),
                                       updatedAt: DateTime.now(),
@@ -167,21 +164,8 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                                   );
                         }
                       },
-
-                      //     : context.read<CategoryProvider>().addCategory(
-                      //           context,
-                      //           CategoryModel(
-                      //               id: "",
-                      //               label: context
-                      //                   .read<CategoryProvider>()
-                      //                   .labelController
-                      //                   .text,
-                      //               createdAt: DateTime.now(),
-                      //               updatedAt: DateTime.now()),
-                      //         );
-
                       text: widget.classroom != null ? 'Update' : 'Create',
-                      fontSize: 12,
+                      fontSize: 14,
                     ),
                   )
                 ],
@@ -210,21 +194,13 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
           decoration: InputDecoration(
             alignLabelWithHint: true,
             fillColor: Theme.of(context).cardTheme.color,
-            // isCollapsed: true,
             errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 1), borderRadius: BorderRadius.circular(10)),
             enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xffD3D7DB), width: 1), borderRadius: BorderRadius.circular(10)),
             focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1), borderRadius: BorderRadius.circular(10)),
             focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1), borderRadius: BorderRadius.circular(10)),
             hintText: hintText,
-
-            errorStyle: const TextStyle(
-              height: 1,
-              fontSize: 14.0,
-            ),
-
+            errorStyle: const TextStyle(height: 1, fontSize: 14.0),
             hintStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(height: 1, fontSize: 14.0, color: Theme.of(context).hintColor),
-
-            // isDense: true,
             suffixIcon: suffixIcon,
           ),
           maxLines: maxLines,
@@ -241,11 +217,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
       width: 20,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.all(
-          Radius.circular(
-            50,
-          ),
-        ),
+        borderRadius: const BorderRadius.all(Radius.circular(50)),
       ),
       child: InkWell(
         onTap: () {
@@ -294,16 +266,10 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
               return false;
             }
           },
-
-          // suffixProps: const DropdownSuffixProps(
-          //   clearButtonProps:
-          //       ClearButtonProps(isVisible: true),
-          // ),
           key: context.read<ClassroomProvider>().usersKey,
           asyncItems: (string) {
             return context.read<UserProvider>().getUsersAsFuture(context);
           },
-          // validator: (value) => validateEmptyListWithResponse(value, "please select a user"),
           onChanged: (newValue) {
             context.read<ClassroomProvider>().addNewUsers(
                   newValue,
@@ -311,18 +277,16 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
           },
           selectedItems: context.read<ClassroomProvider>().selectedUsers,
           compareFn: (item, selectedItem) => item.email == selectedItem.email,
-
           dropdownDecoratorProps: const DropDownDecoratorProps(
               dropdownSearchDecoration: InputDecoration(
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.transparent)),
                   filled: false,
                   hintStyle: TextStyle(
-                    fontSize: 12.0,
+                    fontSize: 14.0,
                   ),
                   hintText: "Search for a user")),
           popupProps: PopupPropsMultiSelection.menu(
             searchDelay: Duration.zero,
-            // showSelectedItems: true,
             menuProps: MenuProps(backgroundColor: Theme.of(context).colorScheme.surface),
             onItemAdded: (l, s) => context.read<ClassroomProvider>().handleCheckBoxState(
                   popupBuilderKey: context.read<ClassroomProvider>().usersPopupBuilderKey,
@@ -349,7 +313,6 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                   prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
                   filled: true,
                   fillColor: Theme.of(context).dialogBackgroundColor,
-                  //  isDense: true,
                   hintText: "Search for a user",
                 )),
             loadingBuilder: (context, searchEntry) {
@@ -424,7 +387,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                       borderRadius: BorderRadius.circular(60),
                       onTap: () {
                         context.read<ClassroomProvider>().updateSelectedColor(color);
-                        Navigator.pop(ctx); // Close the popup
+                        Navigator.pop(ctx);
                       },
                       child: Container(
                         width: 30,
@@ -432,7 +395,6 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                         decoration: BoxDecoration(
                           color: color,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black12, width: 1),
                         ),
                       ),
                     );
@@ -451,18 +413,17 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
             children: [
               Expanded(
                 child: Text(
-                  "Pick a color for classroom thumbnail",
+                  "Pick a color for the classroom thumbnail",
                   style: TextStyle(color: Theme.of(context).hintColor, fontSize: 14),
                 ),
               ),
               Container(
-                width: 30,
-                height: 30,
+                width: 25,
+                height: 25,
                 margin: const EdgeInsets.only(right: 10),
                 decoration: BoxDecoration(
                   color: context.watch<ClassroomProvider>().selectedColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black12, width: 1),
                 ),
               ),
               const Icon(Icons.arrow_drop_down)

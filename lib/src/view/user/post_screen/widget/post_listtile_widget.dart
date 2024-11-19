@@ -92,7 +92,7 @@ class PostListTileWidget extends StatelessWidget {
                         itemBuilder: (context) => [
                               PopupMenuItem<String>(
                                 value: 'Report classroom',
-                                onTap: context.read<UserProvider>().currentUser!.role != "Admin"
+                                onTap: context.read<UserProvider>().currentUser!.role!.id == "3"
                                     ? null
                                     : () async {
                                         showDialog<void>(

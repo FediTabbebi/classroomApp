@@ -9,14 +9,12 @@ import 'package:go_router/go_router.dart';
 
 class CommentProvider with ChangeNotifier {
   ClassroomService service = locator<ClassroomService>();
-  final GlobalKey<FormState> commentFormKey = GlobalKey<FormState>();
-  final TextEditingController postCommentController = TextEditingController();
-
+  String meesage = "";
   bool isAddingComment = false;
   Future<void> addComment(BuildContext context, ClassroomModel post) async {
     isAddingComment = true;
     notifyListeners();
-    postCommentController.clear();
+
     await service.updateClassroom(post).then((value) async {
       isAddingComment = false;
       notifyListeners();
@@ -28,7 +26,7 @@ class CommentProvider with ChangeNotifier {
   }
 
   setCommentControllerText(String value) {
-    postCommentController.text = value;
+    meesage = value;
     notifyListeners();
   }
 

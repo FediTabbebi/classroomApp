@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/user_role.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
@@ -32,9 +33,34 @@ class AdminUserManagementService {
     List<UserModel> usersList = [];
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').orderBy('createdAt', descending: true).get();
+
       for (var doc in querySnapshot.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        usersList.add(UserModel.fromMap(data));
+
+        // Create the UserModel from the fetched data
+        UserModel user = UserModel.fromMap(data);
+
+        // Fetch the role reference (roleRef) from the user data
+        DocumentReference roleRef = user.roleRef;
+
+        // Fetch the role document from the 'roles' collection
+        DocumentSnapshot roleDocument = await roleRef.get();
+
+        if (roleDocument.exists) {
+          // Safely cast the role data to Map<String, dynamic>
+          Map<String, dynamic> roleData = roleDocument.data() as Map<String, dynamic>;
+
+          // Parse the role data into a UserRole object
+          UserRole role = UserRole.fromMap(roleData);
+
+          // Set the role in the UserModel
+          user.role = role;
+        } else {
+          print("Role document does not exist for user: ${user.userId}");
+        }
+
+        // Add the user with the fetched role to the list
+        usersList.add(user);
       }
     } catch (e) {
       if (kDebugMode) {
@@ -42,5 +68,21 @@ class AdminUserManagementService {
       }
     }
     return usersList;
+  }
+
+  Future<List<UserRole>> getAllRoles() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('roles').get();
+
+      // Mapping documents to UserRole objects
+      List<UserRole> roles = snapshot.docs.map((doc) {
+        return UserRole.fromMap(doc.data() as Map<String, dynamic>);
+      }).toList();
+
+      return roles;
+    } catch (e) {
+      print("Error fetching roles: $e");
+      return []; // Return an empty list in case of error
+    }
   }
 }

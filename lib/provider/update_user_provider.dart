@@ -2,9 +2,11 @@ import 'dart:io';
 
 import 'package:classroom_app/locator.dart';
 import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/user_role.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/service/auth_service.dart';
 import 'package:classroom_app/service/storage_service.dart';
+import 'package:classroom_app/src/view/admin/user_management/user_management_datasource.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/src/widget/loading_progress_dialog.dart';
 import 'package:classroom_app/utils/exception_handler.dart';
@@ -35,17 +37,12 @@ class UpdateUserProvider extends ChangeNotifier {
   File? userCreationImg;
   File? imageDataMobile;
 
-  String? selectedUserRole;
+  UserRole? selectedUserRole;
 
   final userRoleMultiKey = GlobalKey<DropdownSearchState<String>>();
   final GlobalKey<DropdownSearchState<String>> popupBuilderKey = GlobalKey<DropdownSearchState<String>>();
 
   bool? popupBuilderSelection = false;
-  List<String> userRole = [
-    'Admin',
-    'Instructor',
-    'User',
-  ];
 
   void handleCheckBoxState({bool updateState = true}) {
     var selectedItem = popupBuilderKey.currentState?.popupGetSelectedItems ?? [];
@@ -55,16 +52,16 @@ class UpdateUserProvider extends ChangeNotifier {
     if (updateState) notifyListeners();
   }
 
-  updateProfile(BuildContext context, File? userImg) async {
+  updateProfile(BuildContext context, File? userImg, String userRoleId) async {
     if (kIsWeb) {
       if (formKey.currentState!.validate()) {
         if (verifyFields() && imageData == null) {
           showingDialog(context, "No Changes Detected", "Please make sure to modify at least one field before attempting to update.");
         } else {
           if (imageData != null) {
-            await updateUserAndUploadImage(context, imageData!);
+            await updateUserAndUploadImage(context, imageData!, userRoleId);
           } else {
-            updateUserWithoutUploadingImg(context);
+            updateUserWithoutUploadingImg(context, userRoleId);
           }
         }
       }
@@ -74,31 +71,34 @@ class UpdateUserProvider extends ChangeNotifier {
           showingDialog(context, "No Changes Detected", "Please make sure to modify at least one field before attempting to update.");
         } else {
           if (userImg != null) {
-            await updateUserAndUploadImage(context, userImg.readAsBytesSync());
+            await updateUserAndUploadImage(context, userImg.readAsBytesSync(), userRoleId);
           } else {
-            updateUserWithoutUploadingImg(context);
+            updateUserWithoutUploadingImg(context, userRoleId);
           }
         }
       }
     }
   }
 
-  Future<void> updateUserWithoutUploadingImg(BuildContext context) async {
+  Future<void> updateUserWithoutUploadingImg(BuildContext context, String userRole) async {
     isLoading = true;
     notifyListeners();
 
     await authService
-        .updateUser(UserModel(
-            firstName: firstNameController.text,
-            lastName: lastNameController.text,
-            email: emailController.text,
-            profilePicture: userProvider.currentUser!.profilePicture,
-            role: userProvider.currentUser!.role,
-            password: userProvider.currentUser!.password,
-            userId: userProvider.currentUser!.userId,
-            createdAt: userProvider.currentUser!.createdAt,
-            updatedAt: DateTime.now(),
-            isDeleted: userProvider.currentUser!.isDeleted))
+        .updateUser(
+            UserModel(
+                firstName: firstNameController.text,
+                lastName: lastNameController.text,
+                email: emailController.text,
+                profilePicture: userProvider.currentUser!.profilePicture,
+                role: userProvider.currentUser!.role,
+                roleRef: userProvider.currentUser!.roleRef,
+                password: userProvider.currentUser!.password,
+                userId: userProvider.currentUser!.userId,
+                createdAt: userProvider.currentUser!.createdAt,
+                updatedAt: DateTime.now(),
+                isDeleted: userProvider.currentUser!.isDeleted),
+            userRole)
         .then((value) async {
       await authService.getAuthUser().then((value) async {
         clearControllers();
@@ -115,23 +115,26 @@ class UpdateUserProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> updateUserAndUploadImage(BuildContext context, Uint8List imageData) async {
+  Future<void> updateUserAndUploadImage(BuildContext context, Uint8List imageData, String userRole) async {
     isLoading = true;
     notifyListeners();
     await storage.uploadImage(imageData, '${userProvider.currentUser!.firstName}-${userProvider.currentUser!.userId}', 'Profile Images').then((value) async {
       imageURL = value;
       await authService
-          .updateUser(UserModel(
-              firstName: firstNameController.text,
-              lastName: lastNameController.text,
-              email: emailController.text,
-              profilePicture: imageURL,
-              role: userProvider.currentUser!.role,
-              password: userProvider.currentUser!.password,
-              userId: userProvider.currentUser!.userId,
-              createdAt: userProvider.currentUser!.createdAt,
-              updatedAt: DateTime.now(),
-              isDeleted: userProvider.currentUser!.isDeleted))
+          .updateUser(
+              UserModel(
+                  firstName: firstNameController.text,
+                  lastName: lastNameController.text,
+                  email: emailController.text,
+                  profilePicture: imageURL,
+                  role: userProvider.currentUser!.role,
+                  roleRef: userProvider.currentUser!.roleRef,
+                  password: userProvider.currentUser!.password,
+                  userId: userProvider.currentUser!.userId,
+                  createdAt: userProvider.currentUser!.createdAt,
+                  updatedAt: DateTime.now(),
+                  isDeleted: userProvider.currentUser!.isDeleted),
+              userRole)
           .then((value) async {
         await authService.getAuthUser().then((value) {
           clearControllers();
@@ -149,7 +152,11 @@ class UpdateUserProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> createNewUser(UserModel user, BuildContext context, File? img) async {
+  Future<void> createNewUser(
+    UserModel user,
+    BuildContext context,
+    File? img,
+  ) async {
     BuildContext? dialogContext;
     showDialog<void>(
         //  barrierColor: Colors.transparent,
@@ -165,10 +172,18 @@ class UpdateUserProvider extends ChangeNotifier {
     if (img != null) {
       await storage.uploadImage(imageData!, '${user.firstName}-${user.lastName}', 'Profile Images').then((value) async {
         imageURL = value;
-        return await authService.registerUser(user: user, profilePicture: imageURL).then((value) async {
+        return await authService
+            .registerUser(
+          user: user,
+          profilePicture: imageURL,
+        )
+            .then((value) async {
           await context.read<UserProvider>().getUsersAsFuture(context).then((allUser) {
             isLoading = false;
             context.read<UserProvider>().userModelList = allUser;
+            if (context.read<UserProvider>().userManagementDataSource == null) {
+              context.read<UserProvider>().userManagementDataSource = UserManagementDatasource(users: allUser, context: context);
+            }
             context.read<UserProvider>().userManagementDataSource!.updateDataGridSource();
             context.read<UserProvider>().notifierProvider();
             clearControllers();
@@ -194,7 +209,11 @@ class UpdateUserProvider extends ChangeNotifier {
         }
       });
     } else {
-      await authService.registerUser(user: user).then((value) async {
+      await authService
+          .registerUser(
+        user: user,
+      )
+          .then((value) async {
         await context.read<UserProvider>().getUsersAsFuture(context).then((value) {
           context.read<UserProvider>().userModelList = value;
           context.read<UserProvider>().userManagementDataSource!.updateDataGridSource();
@@ -216,7 +235,7 @@ class UpdateUserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> banOrUnbanUser(BuildContext context, UserModel user) async {
+  Future<void> banOrUnbanUser(BuildContext context, UserModel user, String userRoleId) async {
     BuildContext? dialogContext;
     showDialog<void>(
         //  barrierColor: Colors.transparent,
@@ -230,17 +249,20 @@ class UpdateUserProvider extends ChangeNotifier {
           );
         });
     await authService
-        .updateUser(UserModel(
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            profilePicture: user.profilePicture,
-            role: user.role,
-            password: user.password,
-            userId: user.userId,
-            createdAt: user.createdAt,
-            updatedAt: DateTime.now(),
-            isDeleted: user.isDeleted ? false : true))
+        .updateUser(
+            UserModel(
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                profilePicture: user.profilePicture,
+                role: user.role,
+                roleRef: userProvider.currentUser!.roleRef,
+                password: user.password,
+                userId: user.userId,
+                createdAt: user.createdAt,
+                updatedAt: DateTime.now(),
+                isDeleted: user.isDeleted ? false : true),
+            userRoleId)
         .then((value) async {
       await context.read<UserProvider>().getUsersAsFuture(context).then((value) {
         context.read<UserProvider>().notifierProvider();
@@ -312,6 +334,7 @@ class UpdateUserProvider extends ChangeNotifier {
     lastNameController.text = userProvider.currentUser?.lastName ?? "";
     emailController.text = userProvider.currentUser?.email ?? "";
     imageURL = userProvider.currentUser?.profilePicture ?? "";
+    selectedUserRole = userProvider.currentUser?.role;
   }
 
   void initControllers(UserModel user) {
@@ -352,7 +375,7 @@ class UpdateUserProvider extends ChangeNotifier {
 
   /////////////////////////////////////////////////////////////////////
 
-  void updateUser(BuildContext context, UserModel user, File? userImg) async {
+  void updateUser(BuildContext context, UserModel user, File? userImg, String userRoleId) async {
     if (verifyFieldsWithRole(user) && userImg == null) {
       showingDialog(context, "No Changes Detected", "Please make sure to modify at least one field before attempting to update.");
     } else {
@@ -369,7 +392,7 @@ class UpdateUserProvider extends ChangeNotifier {
             );
           });
       if (userImg != null) {
-        await adminupdateUserAndUploadImage(context, imageData!, user).then((value) {
+        await adminupdateUserAndUploadImage(context, imageData!, user, userRoleId).then((value) {
           Navigator.of(dialogContext!).pop();
           Navigator.of(context).pop();
         }).onError((error, stackTrace) {
@@ -377,10 +400,7 @@ class UpdateUserProvider extends ChangeNotifier {
           showingDialog(context, 'Error', 'An error has occured');
         });
       } else {
-        adminUpdateUserWithoutUploadingImage(
-          context,
-          user,
-        ).then((value) {
+        adminUpdateUserWithoutUploadingImage(context, user, userRoleId).then((value) {
           Navigator.of(dialogContext!).pop();
           Navigator.of(context).pop();
         }).onError((error, stackTrace) {
@@ -391,22 +411,22 @@ class UpdateUserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> adminUpdateUserWithoutUploadingImage(
-    BuildContext context,
-    UserModel user,
-  ) async {
+  Future<void> adminUpdateUserWithoutUploadingImage(BuildContext context, UserModel user, String userRoleId) async {
     await authService
-        .updateUser(UserModel(
-            firstName: firstNameController.text,
-            lastName: lastNameController.text,
-            email: emailController.text,
-            profilePicture: user.profilePicture,
-            role: selectedUserRole!,
-            password: user.password,
-            userId: user.userId,
-            createdAt: user.createdAt,
-            updatedAt: DateTime.now(),
-            isDeleted: user.isDeleted))
+        .updateUser(
+            UserModel(
+                firstName: firstNameController.text,
+                lastName: lastNameController.text,
+                email: emailController.text,
+                profilePicture: user.profilePicture,
+                role: selectedUserRole!,
+                password: user.password,
+                roleRef: user.roleRef,
+                userId: user.userId,
+                createdAt: user.createdAt,
+                updatedAt: DateTime.now(),
+                isDeleted: user.isDeleted),
+            selectedUserRole!.id)
         .then((value) async {
       await context.read<UserProvider>().getUsersAsFuture(context).then((value) async {
         context.read<UserProvider>().userModelList = value;
@@ -417,27 +437,26 @@ class UpdateUserProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> adminupdateUserAndUploadImage(
-    BuildContext context,
-    Uint8List imageData,
-    UserModel user,
-  ) async {
+  Future<void> adminupdateUserAndUploadImage(BuildContext context, Uint8List imageData, UserModel user, String userRoleId) async {
     isLoading = true;
     notifyListeners();
     await storage.uploadImage(imageData, '${user.firstName}-${user.userId}', 'Profile Images').then((value) async {
       imageURL = value;
       await authService
-          .updateUser(UserModel(
-              firstName: firstNameController.text,
-              lastName: lastNameController.text,
-              email: emailController.text,
-              profilePicture: imageURL,
-              role: selectedUserRole!,
-              password: user.password,
-              userId: user.userId,
-              createdAt: user.createdAt,
-              updatedAt: DateTime.now(),
-              isDeleted: user.isDeleted))
+          .updateUser(
+              UserModel(
+                  firstName: firstNameController.text,
+                  lastName: lastNameController.text,
+                  email: emailController.text,
+                  profilePicture: imageURL,
+                  role: selectedUserRole!,
+                  password: user.password,
+                  roleRef: user.roleRef,
+                  userId: user.userId,
+                  createdAt: user.createdAt,
+                  updatedAt: DateTime.now(),
+                  isDeleted: user.isDeleted),
+              selectedUserRole!.id)
           .then((value) async {
         await context.read<UserProvider>().getUsersAsFuture(context).then((value) {
           context.read<UserProvider>().userModelList = value;

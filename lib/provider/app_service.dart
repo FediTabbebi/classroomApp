@@ -11,10 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-enum UserType {
-  admin,
-  user,
-}
+enum UserType { admin, user, instructor }
 
 class AppService extends ChangeNotifier {
   static final AuthenticationServices getUser = locator<AuthenticationServices>();
@@ -35,9 +32,12 @@ class AppService extends ChangeNotifier {
           currentUser = value;
           userProvider.updateUser(currentUser!, false);
 
-          if (currentUser!.role == "Admin") {
+          if (currentUser!.role!.id == "1") {
             userRole = UserType.admin;
             initHomeLocation = "/admin-users-management";
+          } else if (currentUser!.role!.id == "2") {
+            userRole = UserType.instructor;
+            initHomeLocation = "/instructor-myclassrooms";
           } else {
             userRole = UserType.user;
             initHomeLocation = "/user-myclassrooms";
@@ -65,8 +65,8 @@ class AppService extends ChangeNotifier {
     final registerLocation = state.namedLocation("register");
 
     final adminRoutes = state.fullPath!.startsWith('admin') || state.fullPath!.startsWith('/admin');
-    final userRoutes = state.fullPath!.startsWith('/user');
-
+    final userRoutes = state.fullPath!.startsWith('/user') || state.fullPath!.startsWith('/user');
+    final instructorRoutes = state.fullPath!.startsWith('/instructor') || state.fullPath!.startsWith('/instructor');
     final isLogedIn = currentUser != null;
     final isGoingToLogin = state.matchedLocation == loginLocation;
     final isGoingToRegister = state.matchedLocation == registerLocation;
@@ -77,6 +77,9 @@ class AppService extends ChangeNotifier {
         return initHomeLocation;
       }
       if (userRole == UserType.admin && !adminRoutes) {
+        return initHomeLocation;
+      }
+      if (userRole == UserType.instructor && !instructorRoutes) {
         return initHomeLocation;
       }
       if (userRole == UserType.user && !userRoutes) {

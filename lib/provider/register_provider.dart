@@ -30,7 +30,11 @@ class RegisterProvider with ChangeNotifier {
     if (formKey.currentState!.validate()) {
       isLoading = true;
       notifyListeners();
-      await authService.registerUser(user: user).then((value) {
+      await authService
+          .registerUser(
+        user: user,
+      )
+          .then((value) {
         isLoading = false;
         clearControllers();
 

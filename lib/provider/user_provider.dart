@@ -1,5 +1,6 @@
 import 'package:classroom_app/locator.dart';
 import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/user_role.dart';
 import 'package:classroom_app/service/user_management_service.dart';
 import 'package:classroom_app/src/view/admin/user_management/user_management_datasource.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
@@ -25,6 +26,11 @@ class UserProvider with ChangeNotifier {
     return userModelList;
   }
 
+  Future<List<UserRole>> getAllRoles(BuildContext context) async {
+    final rslt = await service.getAllRoles();
+
+    return rslt;
+  }
   // void filterData(
   //   String value,
   // ) {
@@ -56,7 +62,7 @@ class UserProvider with ChangeNotifier {
         });
   }
 
-  updateUser(UserModel? user, bool withNotifier) {
+  void updateUser(UserModel? user, bool withNotifier) {
     currentUser = user;
 
     if (withNotifier) {

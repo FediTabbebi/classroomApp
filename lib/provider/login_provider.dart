@@ -1,5 +1,6 @@
 import 'package:classroom_app/locator.dart';
 import 'package:classroom_app/provider/app_service.dart';
+import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/service/auth_service.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/utils/exception_handler.dart';
@@ -11,14 +12,15 @@ import 'package:go_router/go_router.dart';
 
 class LoginProvider with ChangeNotifier {
   final GlobalKey<FormState> loginFormKey = GlobalKey<FormState>();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController(text: "admin@gmail.com");
+  final TextEditingController passwordController = TextEditingController(text: "fedifedi");
   bool isLoading = false;
   bool isObscure = true;
   bool passwordFieldVisibility = false;
   final AuthenticationServices authService = locator<AuthenticationServices>();
   AppService appService = locator<AppService>();
   final SharedPrefs prefs = locator<SharedPrefs>();
+  UserProvider userProvider = locator<UserProvider>();
 
   Future<void> loginUser(String email, String password, BuildContext context) async {
     if (loginFormKey.currentState!.validate()) {
@@ -29,7 +31,7 @@ class LoginProvider with ChangeNotifier {
         if (value!.isDeleted) {
           showDialogMessage(context, "Your account has been banned\nplease contact support at\nautistic@gmail.com");
         } else {
-          prefs.saveUserId(value.userId);
+          await prefs.saveUserId(value.userId);
           await appService.authNotifier();
 
           clearControllers();
@@ -48,7 +50,8 @@ class LoginProvider with ChangeNotifier {
   }
 
   Future<void> signoutUser() async {
-    prefs.removeUserId();
+    await prefs.removeUserId();
+    userProvider.updateUser(null, false);
     await appService.authNotifier();
   }
 

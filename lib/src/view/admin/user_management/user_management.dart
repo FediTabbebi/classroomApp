@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:classroom_app/constant/app_colors.dart';
 import 'package:classroom_app/constant/app_images.dart';
 import 'package:classroom_app/model/user_model.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
@@ -7,10 +8,12 @@ import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/view/admin/user_management/user_management_datasource.dart';
 import 'package:classroom_app/src/widget/add_update_user_dialog.dart';
 import 'package:classroom_app/src/widget/app_bar_widget.dart';
+import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/src/widget/elevated_button_widget.dart';
 import 'package:classroom_app/src/widget/loading_indicator_widget.dart';
 import 'package:classroom_app/theme/themes.dart';
 import 'package:classroom_app/utils/responsive_helper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -53,7 +56,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           appBar: AppBarWidget(
               title: "User Management Hub",
               subtitle: "User management options are available here",
-              leadingIconData: FontAwesomeIcons.userGroup,
+              leadingIconData: FontAwesomeIcons.users,
               actions: !ResponsiveWidget.isLargeScreen(context)
                   ? [
                       Tooltip(
@@ -102,15 +105,21 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                               ),
                               enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1, color: Theme.of(context).highlightColor), borderRadius: BorderRadius.circular(10)),
                               // contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                              prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: AppColors.darkGrey,
+                              ),
                               hintText: "Search for a user",
-                              hintStyle: const TextStyle(fontSize: 14),
+                              hintStyle: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.darkGrey,
+                              ),
                               suffixIcon: searchQuery.isNotEmpty
                                   ? IconButton(
                                       icon: const Icon(
                                         Icons.clear,
                                         size: 20,
-                                        color: Color(0xff667085),
+                                        color: AppColors.darkGrey,
                                       ),
                                       onPressed: () {
                                         setState(() {
@@ -160,44 +169,49 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                           color: Theme.of(context).colorScheme.primary,
                         )),
                       )
-                    : Selector<UserProvider, List<UserModel>?>(
-                        selector: (context, provider) => provider.userModelList,
-                        builder: (context, usersList, child) {
-                          List<UserModel> filteredUsers = usersList!.where((attempt) {
-                            final filtred = usersList.firstWhere((user) => user.userId == attempt.userId,
-                                orElse: () => UserModel(
-                                      userId: "",
-                                      firstName: "",
-                                      lastName: "",
-                                      email: "",
-                                      password: "",
-                                      profilePicture: "",
-                                      role: "",
-                                      createdAt: DateTime.now(),
-                                      updatedAt: DateTime.now(),
-                                      isDeleted: false,
-                                    ));
-                            if (filtred.userId == '') {
-                              return false;
-                            }
-                            String userName = filtred.email.toLowerCase();
-                            return userName.contains(searchQuery.toLowerCase());
-                          }).toList();
+                    : widget.usersList!.isEmpty
+                        ? const Expanded(
+                            child: Center(
+                            child: Text("There is no user other than you in this platform"),
+                          ))
+                        : Selector<UserProvider, List<UserModel>?>(
+                            selector: (context, provider) => provider.userModelList,
+                            builder: (context, usersList, child) {
+                              List<UserModel> filteredUsers = usersList!.where((attempt) {
+                                final filtred = usersList.firstWhere((user) => user.userId == attempt.userId,
+                                    orElse: () => UserModel(
+                                          userId: "",
+                                          firstName: "",
+                                          lastName: "",
+                                          email: "",
+                                          password: "",
+                                          profilePicture: "",
+                                          roleRef: FirebaseFirestore.instance.collection('roles').doc(),
+                                          createdAt: DateTime.now(),
+                                          updatedAt: DateTime.now(),
+                                          isDeleted: false,
+                                        ));
+                                if (filtred.userId == '') {
+                                  return false;
+                                }
+                                String userName = filtred.email.toLowerCase();
+                                return userName.contains(searchQuery.toLowerCase());
+                              }).toList();
 
-                          context.read<UserProvider>().userManagementDataSource = UserManagementDatasource(
-                            users: filteredUsers,
-                            context: context,
-                          );
+                              context.read<UserProvider>().userManagementDataSource = UserManagementDatasource(
+                                users: filteredUsers,
+                                context: context,
+                              );
 
-                          return filteredUsers.isEmpty
-                              ? const Expanded(
-                                  child: Center(
-                                  child: Text("There is no user match this email address"),
-                                ))
-                              : ResponsiveWidget.isLargeScreen(context)
-                                  ? largeScreen(filteredUsers)
-                                  : smallScreen(filteredUsers);
-                        }),
+                              return filteredUsers.isEmpty
+                                  ? const Expanded(
+                                      child: Center(
+                                      child: Text("There is no user match this email address"),
+                                    ))
+                                  : ResponsiveWidget.isLargeScreen(context)
+                                      ? largeScreen(filteredUsers)
+                                      : smallScreen(filteredUsers);
+                            }),
               ],
             ),
           )),
@@ -398,7 +412,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xff717D8A),
+                          color: AppColors.darkGrey,
                         ),
                   ),
                 ),
@@ -417,7 +431,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xff717D8A),
+                          color: AppColors.darkGrey,
                         ),
                   ),
                 ),
@@ -435,7 +449,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xff717D8A),
+                          color: AppColors.darkGrey,
                         ),
                   ),
                 ),
@@ -454,7 +468,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xff717D8A),
+                          color: AppColors.darkGrey,
                         ),
                   ),
                 ),
@@ -473,7 +487,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xff717D8A),
+                          color: AppColors.darkGrey,
                         ),
                   ),
                 ),
@@ -501,10 +515,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 // Leading section: User Profile Picture
                 user.profilePicture.isEmpty
                     ? Container(
-                        height: 60,
-                        width: 60,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
+                          color: context.read<ThemeProvider>().isDarkMode ? const Color.fromARGB(255, 25, 25, 30) : Themes.secondaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
                           image: DecorationImage(
                             image: Image.asset(AppImages.userProfile).image,
                             fit: BoxFit.cover,
@@ -512,22 +527,19 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         ),
                       )
                     : SizedBox(
-                        width: 60,
-                        height: 60,
+                        width: 80,
+                        height: 80,
                         child: CachedNetworkImage(
                           imageUrl: user.profilePicture,
-                          placeholder: (context, url) => Container(
+                          placeholder: (context, url) => const SizedBox(
                             height: 20,
                             width: 20,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                            ),
-                            child: const UnconstrainedBox(
+                            child: UnconstrainedBox(
                               child: SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 3,
+                                child: LoadingIndicatorWidget(
+                                  size: 30,
                                 ),
                               ),
                             ),
@@ -536,7 +548,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                              borderRadius: BorderRadius.circular(10),
                               image: DecorationImage(
                                 image: imageProvider,
                                 fit: BoxFit.cover,
@@ -555,7 +567,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     children: [
                       // Title (User first name)
                       Text(
-                        user.firstName,
+                        "${user.firstName} ${user.lastName}",
                         softWrap: true,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -566,7 +578,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         user.email,
                         softWrap: true,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(fontSize: 12, color: AppColors.darkGrey),
                       ),
                       const SizedBox(height: 5),
                       Text(
@@ -605,7 +617,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         );
       });
 
-  Widget menuWidget(BuildContext context, UserModel user) => MenuAnchor(
+  Widget menuWidget(BuildContext ctxx, UserModel user) => MenuAnchor(
           alignmentOffset: const Offset(-80, -30),
           builder: (BuildContext context, MenuController controller, Widget? child) {
             return IconButton(
@@ -625,7 +637,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           menuChildren: [
             MenuItemButton(
               onPressed: () async {
-                await context.read<UpdateUserProvider>().banOrUnbanUser(context, user);
+                showDialog<void>(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return DialogWidget(
+                      dialogTitle: user.isDeleted ? "Unban Confirmation" : "Ban Confirmation",
+                      dialogContent: user.isDeleted ? "Are you sure you want to unban this user?" : "Are you sure you want to ban this user?",
+                      isConfirmDialog: true,
+                      onConfirm: () async {
+                        Navigator.pop(ctx);
+                        await ctxx.read<UpdateUserProvider>().banOrUnbanUser(context, user, user.role!.id);
+                      },
+                    );
+                  },
+                );
               },
               child: SizedBox(
                 width: 100,

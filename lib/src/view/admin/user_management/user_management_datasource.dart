@@ -3,6 +3,7 @@ import 'package:classroom_app/constant/app_images.dart';
 import 'package:classroom_app/model/user_model.dart';
 import 'package:classroom_app/provider/update_user_provider.dart';
 import 'package:classroom_app/src/widget/add_update_user_dialog.dart';
+import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/src/widget/loading_indicator_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
@@ -67,7 +68,20 @@ class UserManagementDatasource extends DataGridSource {
                           user.isDeleted ? " Unban" : "ban",
                         ),
                         onTap: () async {
-                          await context.read<UpdateUserProvider>().banOrUnbanUser(context, user);
+                          showDialog<void>(
+                            context: context,
+                            builder: (BuildContext ctx) {
+                              return DialogWidget(
+                                dialogTitle: user.isDeleted ? "Unban Confirmation" : "Ban Confirmation",
+                                dialogContent: user.isDeleted ? "Are you sure you want to unban this user?" : "Are you sure you want to ban this user?",
+                                isConfirmDialog: true,
+                                onConfirm: () async {
+                                  Navigator.pop(ctx);
+                                  await context.read<UpdateUserProvider>().banOrUnbanUser(context, user, user.role!.id);
+                                },
+                              );
+                            },
+                          );
                         },
                       ),
                     ],
@@ -86,12 +100,14 @@ class UserManagementDatasource extends DataGridSource {
                   width: 10,
                 ),
                 user.profilePicture.isEmpty
-                    ? Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(image: Image.asset(AppImages.userProfile).image, fit: BoxFit.cover),
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(image: Image.asset(AppImages.userProfile).image, fit: BoxFit.cover),
+                          ),
                         ),
                       )
                     : CachedNetworkImage(
@@ -101,8 +117,7 @@ class UserManagementDatasource extends DataGridSource {
                           height: 50,
                           width: 50,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            // borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(6),
                             image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
                           ),
                         ),
@@ -115,15 +130,14 @@ class UserManagementDatasource extends DataGridSource {
                                 child: LoadingIndicatorWidget(
                               size: 30,
                             ))),
-                        errorWidget: (context, url, error) => Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            // borderRadius: BorderRadius.circular(6),
-                            image: DecorationImage(image: Image.asset("assets/images/user_holder.png").image, fit: BoxFit.cover),
-                          ),
-                        ),
+                        errorWidget: (context, url, error) {
+                          print(error.toString());
+                          return const SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: Icon(Icons.error),
+                          );
+                        },
                       ),
                 const SizedBox(width: 10), // Add spacing between image and text
                 Expanded(
@@ -189,7 +203,7 @@ class UserManagementDatasource extends DataGridSource {
                   columnName: 'memberSince',
                   value: "${dataGridRow.createdAt.toLocal()}".split(' ')[0],
                 ),
-                DataGridCell<String>(columnName: 'role', value: dataGridRow.role),
+                DataGridCell<String>(columnName: 'role', value: dataGridRow.role!.label),
                 DataGridCell<String>(
                   columnName: 'status',
                   value: dataGridRow.isDeleted ? "Banned" : "Active",

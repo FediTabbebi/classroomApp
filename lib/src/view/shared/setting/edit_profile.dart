@@ -10,7 +10,6 @@ import 'package:classroom_app/theme/themes.dart';
 import 'package:classroom_app/utils/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -29,34 +28,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const AppBarWidget(
-        title: 'Customize Your Profile Information',
-        subtitle: 'Customize your profile information here',
-        leadingIconData: FontAwesomeIcons.userLarge,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(top: 60),
-        child: FloatingActionButton(
-          onPressed: () {
-            context.pop();
-            context.read<UpdateUserProvider>().clearControllers();
-          },
-          splashColor: Colors.transparent,
-          highlightElevation: 0,
-          hoverColor: Colors.transparent,
-          hoverElevation: 0,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Icon(Icons.arrow_back_sharp, color: Theme.of(context).textTheme.bodyLarge!.color),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: const AppBarWidget(
+          title: 'Customize Your Profile Information',
+          subtitle: 'Customize your profile information here',
+          leadingIconData: FontAwesomeIcons.userLarge,
+          withBackIcon: true,
         ),
-      ),
-      body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: Align(
+        body: Align(
             alignment: const AlignmentDirectional(0, -1),
             child: Container(
               margin: const EdgeInsets.all(20),
@@ -97,7 +80,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             width: 120,
                             height: 50,
                             onPressed: () async {
-                              context.read<UpdateUserProvider>().updateProfile(context, context.read<UpdateUserProvider>().imageDataMobile);
+                              context.read<UpdateUserProvider>().updateProfile(context, context.read<UpdateUserProvider>().imageDataMobile, context.read<UserProvider>().currentUser!.role!.id);
                             },
                             text: 'Update',
                           )
@@ -125,7 +108,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   width: 150,
                                   height: 150,
                                   decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
                                     image: DecorationImage(
                                         image: AssetImage(
                                           AppImages.userProfile,
@@ -142,7 +124,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     width: 150,
                                     height: 150,
                                     decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
                                       image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
                                     ),
                                   ),
@@ -172,7 +153,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 150,
                           height: 150,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
                             image: DecorationImage(
                                 image: !platformImageCheckerIsMobile()
                                     ? MemoryImage(context.read<UpdateUserProvider>().imageData!)

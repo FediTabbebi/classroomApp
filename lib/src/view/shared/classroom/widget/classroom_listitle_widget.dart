@@ -1,3 +1,4 @@
+import 'package:classroom_app/constant/app_colors.dart';
 import 'package:classroom_app/model/classroom_model.dart';
 import 'package:classroom_app/provider/classroom_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
@@ -11,64 +12,60 @@ import 'package:provider/provider.dart';
 
 class ClassroomListitleWidget extends StatelessWidget {
   final ClassroomModel classroom;
+  final void Function()? onTap;
 
-  const ClassroomListitleWidget({required this.classroom, super.key});
+  const ClassroomListitleWidget({required this.classroom, required this.onTap, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 1,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Theme.of(context).dialogBackgroundColor,
-        ),
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Leading section: Classroom icon and abbreviation
-            Container(
-              alignment: Alignment.center,
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: hexToColor(classroom.colorHex),
-                borderRadius: BorderRadius.circular(10),
+    return InkWell(
+      onTap: onTap,
+      child: Material(
+        elevation: 1,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: Theme.of(context).dialogBackgroundColor,
+          ),
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Leading section: Classroom icon and abbreviation
+              Container(
+                alignment: Alignment.center,
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: hexToColor(classroom.colorHex),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  getAbbreviation(classroom.label),
+                  style: const TextStyle(fontSize: 22, color: Colors.white),
+                ),
               ),
-              child: Text(
-                getAbbreviation(classroom.label),
-                style: const TextStyle(fontSize: 22, color: Colors.white),
+              const SizedBox(width: 16),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(classroom.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(
+                      classroom.createdBy?.email ?? '',
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: AppColors.darkGrey),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 16), // Spacing between leading and text
 
-            // Title and subtitle section
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title (Classroom label)
-                  Text(
-                    classroom.label,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 4), // Spacing between title and subtitle
+              // Trailing section (Admin-specific)
 
-                  // Subtitle (Created by email)
-                  Text(
-                    classroom.createdBy?.email ?? '',
-                    softWrap: true,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-
-            // Trailing section (Admin-specific)
-            if (context.read<UserProvider>().currentUser!.role == "Admin")
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -84,10 +81,11 @@ class ClassroomListitleWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  menuWidget(context, classroom),
+                  if (context.read<UserProvider>().currentUser!.role!.id != "3") menuWidget(context, classroom),
                 ],
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

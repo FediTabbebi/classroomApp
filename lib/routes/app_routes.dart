@@ -5,15 +5,15 @@ import 'package:classroom_app/provider/update_user_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/error_page.dart';
 import 'package:classroom_app/src/view/admin/admin_home_main.dart';
-import 'package:classroom_app/src/view/admin/classroom_management_screen.dart';
 import 'package:classroom_app/src/view/admin/user_management/user_management.dart';
-import 'package:classroom_app/src/view/login_screen.dart';
-import 'package:classroom_app/src/view/register_screen.dart';
-import 'package:classroom_app/src/view/shared/edit_profile.dart';
-import 'package:classroom_app/src/view/shared/setting_screen.dart';
-import 'package:classroom_app/src/view/shared/setting_screen_web.dart';
-import 'package:classroom_app/src/view/user/myposts_screen/myclassrooms_screen.dart';
-import 'package:classroom_app/src/view/user/post_screen/post_details_screen.dart';
+import 'package:classroom_app/src/view/instructor/instructor_home_main.dart';
+import 'package:classroom_app/src/view/shared/auth/login_screen.dart';
+import 'package:classroom_app/src/view/shared/auth/register_screen.dart';
+import 'package:classroom_app/src/view/shared/classroom/classroom_home_main.dart';
+import 'package:classroom_app/src/view/shared/classroom/classroom_screen.dart';
+import 'package:classroom_app/src/view/shared/setting/edit_profile.dart';
+import 'package:classroom_app/src/view/shared/setting/setting_screen.dart';
+import 'package:classroom_app/src/view/shared/setting/setting_screen_web.dart';
 import 'package:classroom_app/src/view/user/user_home_main.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -29,8 +29,9 @@ class AppNavigation {
   static final AppService appService = locator<AppService>();
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
-  static final sectionNavigatorKeyHome = GlobalKey<NavigatorState>(debugLabel: 'admin_home');
-  static final subSectionNavigatorKeyHome = GlobalKey<NavigatorState>(debugLabel: 'user_home');
+  static final adminNavigatorKeyHome = GlobalKey<NavigatorState>(debugLabel: 'admin_home');
+  static final userNavigatorKeyHome = GlobalKey<NavigatorState>(debugLabel: 'user_home');
+  static final instructorNavigatorKeyHome = GlobalKey<NavigatorState>(debugLabel: 'user_home');
 
   late final GoRouter _router = GoRouter(
       debugLogDiagnostics: true,
@@ -91,7 +92,7 @@ class AppNavigation {
                 ),
               ]),
               StatefulShellBranch(
-                  navigatorKey: sectionNavigatorKeyHome,
+                  navigatorKey: adminNavigatorKeyHome,
                   // initialLocation: "/user-dashboard",
                   routes: <RouteBase>[
                     GoRoute(
@@ -102,25 +103,21 @@ class AppNavigation {
                           state,
                         ) =>
                             buildPageWithDefaultTransition(
-                              child: const CLassroomManagementScreen(),
+                              child: const ClassroomScreen(),
                               context: context,
                               state: state,
                               // PostManagementScreen(),
                             ),
                         routes: [
                           GoRoute(
-                            name: "adminPostPreview",
-                            path: "admin-post-details",
-                            pageBuilder: (
-                              context,
-                              state,
-                            ) {
-                              int index = state.extra as int;
+                            name: "admin-classroom-details",
+                            path: "admin-classroom-details/:classroomId",
+                            pageBuilder: (context, state) {
+                              final String classroomId = state.pathParameters["classroomId"]!;
                               return CustomTransitionPage(
                                   key: state.pageKey,
-                                  child: PostDetailsScreen(
-                                    index: index,
-                                    isMyListPreview: false,
+                                  child: ClassroomHomeMain(
+                                    classroomId: classroomId,
                                   ),
                                   transitionDuration: const Duration(milliseconds: 150),
                                   transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
@@ -137,29 +134,6 @@ class AppNavigation {
                           ),
                         ]),
                   ]),
-              // StatefulShellBranch(routes: <RouteBase>[
-              //   GoRoute(
-              //     name: "admin-category-screen",
-              //     path: "/admin-category-screen",
-              //     pageBuilder: (
-              //       context,
-              //       state,
-              //     ) =>
-              //         buildPageWithDefaultTransition(
-              //       child: FutureProvider<List<CategoryModel>?>(
-              //           create: (context) => context.read<CategoryProvider>().getCategoriesAsFuture(context),
-              //           initialData: null,
-              //           child: Consumer2<CategoryProvider, List<CategoryModel>?>(builder: (context, provider, data, child) {
-              //             return CategoryManagementScreen(
-              //               provider: provider,
-              //               usersList: data,
-              //             );
-              //           })),
-              //       context: context,
-              //       state: state,
-              //     ),
-              //   )
-              // ]),
               if (appService.isMobileDevice)
                 StatefulShellBranch(routes: <RouteBase>[
                   GoRoute(
@@ -236,6 +210,133 @@ class AppNavigation {
                     onPopInvoked: (didPop) {
                       print(didPop);
                     },
+                    child: InstructorHomeMain(
+                      navigationShell: navigationShell,
+                    ),
+                  ),
+                  context: context,
+                  state: state,
+                ),
+            branches: [
+              StatefulShellBranch(
+                  navigatorKey: instructorNavigatorKeyHome,
+                  // initialLocation: "/user-dashboard",
+                  routes: <RouteBase>[
+                    GoRoute(
+                        name: "instructor-classrooms",
+                        path: "/instructor-myclassrooms",
+                        pageBuilder: (
+                          context,
+                          state,
+                        ) =>
+                            buildPageWithDefaultTransition(
+                              child: const ClassroomScreen(),
+                              context: context,
+                              state: state,
+                              // PostManagementScreen(),
+                            ),
+                        routes: [
+                          GoRoute(
+                            name: "instructor-classroom-details",
+                            path: "instructor-classroom-details/:classroomId",
+                            pageBuilder: (context, state) {
+                              final String classroomId = state.pathParameters["classroomId"]!;
+                              return CustomTransitionPage(
+                                  key: state.pageKey,
+                                  child: ClassroomHomeMain(
+                                    classroomId: classroomId,
+                                  ),
+                                  transitionDuration: const Duration(milliseconds: 150),
+                                  transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
+                                      position: animation.drive(
+                                        Tween<Offset>(
+                                          begin: const Offset(1, 0),
+                                          end: Offset.zero,
+                                        ).chain(CurveTween(curve: Curves.easeInOut)),
+                                      ),
+                                      // textDirection:
+                                      //    leftToRight ? TextDirection.ltr : TextDirection.rtl,
+                                      child: child));
+                            },
+                          ),
+                        ]),
+                  ]),
+              if (appService.isMobileDevice)
+                StatefulShellBranch(routes: <RouteBase>[
+                  GoRoute(
+                      name: "instructor-settings",
+                      path: "/instructor-settings",
+                      pageBuilder: (
+                        context,
+                        state,
+                      ) =>
+                          buildPageWithDefaultTransition(
+                            child: UserSettingsScreen(),
+                            context: context,
+                            state: state,
+                          ),
+                      routes: [
+                        GoRoute(
+                          name: "instructorEditProfile",
+                          path: "instructorEditProfile",
+                          pageBuilder: (
+                            context,
+                            state,
+                          ) =>
+                              buildPageWithDefaultTransition(
+                            child: const EditProfileScreen(),
+                            context: context,
+                            state: state,
+                          ),
+                          onExit: (context) async {
+                            context.read<UpdateUserProvider>().onExitReinitControllers(context);
+                            return true;
+                          },
+                        )
+                      ])
+                ]),
+              if (!appService.isMobileDevice)
+                StatefulShellBranch(routes: <RouteBase>[
+                  GoRoute(
+                      name: "instructor-settings",
+                      path: "/instructor-settings",
+                      pageBuilder: (
+                        context,
+                        state,
+                      ) =>
+                          buildPageWithDefaultTransition(
+                            child: const SettingScreenWeb(),
+                            context: context,
+                            state: state,
+                          ),
+                      routes: [
+                        GoRoute(
+                          name: "instructorEditProfile",
+                          path: "instructorrEditProfile",
+                          pageBuilder: (
+                            context,
+                            state,
+                          ) =>
+                              buildPageWithDefaultTransition(
+                            child: const EditProfileScreen(),
+                            context: context,
+                            state: state,
+                          ),
+                          onExit: (context) async {
+                            context.read<UpdateUserProvider>().onExitReinitControllers(context);
+                            return true;
+                          },
+                        )
+                      ])
+                ])
+            ]),
+        StatefulShellRoute.indexedStack(
+            pageBuilder: (context, state, navigationShell) => buildPageWithDefaultTransition(
+                  child: PopScope(
+                    canPop: false,
+                    onPopInvoked: (didPop) {
+                      print(didPop);
+                    },
                     child: UserHomeMain(
                       navigationShell: navigationShell,
                     ),
@@ -245,125 +346,48 @@ class AppNavigation {
                 ),
             branches: [
               StatefulShellBranch(
-                  navigatorKey: subSectionNavigatorKeyHome,
+                  navigatorKey: userNavigatorKeyHome,
                   // initialLocation: "/user-dashboard",
                   routes: <RouteBase>[
                     GoRoute(
-                      name: "myclassrooms",
-                      path: "/user-myclassrooms",
-                      pageBuilder: (
-                        context,
-                        state,
-                      ) =>
-                          buildPageWithDefaultTransition(
-                        child: MyClassroomsScreen(),
-                        context: context,
-                        state: state,
-                      ),
-                    ),
+                        name: "myclassrooms",
+                        path: "/user-myclassrooms",
+                        pageBuilder: (
+                          context,
+                          state,
+                        ) =>
+                            buildPageWithDefaultTransition(
+                              child: const ClassroomScreen(),
+                              context: context,
+                              state: state,
+                              // PostManagementScreen(),
+                            ),
+                        routes: [
+                          GoRoute(
+                            name: "user-classroom-details",
+                            path: "user-classroom-details/:classroomId",
+                            pageBuilder: (context, state) {
+                              final String classroomId = state.pathParameters["classroomId"]!;
+                              return CustomTransitionPage(
+                                  key: state.pageKey,
+                                  child: ClassroomHomeMain(
+                                    classroomId: classroomId,
+                                  ),
+                                  transitionDuration: const Duration(milliseconds: 150),
+                                  transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
+                                      position: animation.drive(
+                                        Tween<Offset>(
+                                          begin: const Offset(1, 0),
+                                          end: Offset.zero,
+                                        ).chain(CurveTween(curve: Curves.easeInOut)),
+                                      ),
+                                      // textDirection:
+                                      //    leftToRight ? TextDirection.ltr : TextDirection.rtl,
+                                      child: child));
+                            },
+                          ),
+                        ]),
                   ]),
-              // StatefulShellBranch(routes: <RouteBase>[
-              //   GoRoute(
-              //       name: "user-myclassroom",
-              //       path: "/user-myclassroom",
-              //       pageBuilder: (
-              //         context,
-              //         state,
-              //       ) =>
-              //           buildPageWithDefaultTransition(
-              //             child: const UserDashboardScreen(),
-              //             context: context,
-              //             state: state,
-              //           ),
-              //       routes: [
-              //         GoRoute(
-              //           name: "postDetails",
-              //           path: "post-details",
-              //           pageBuilder: (
-              //             context,
-              //             state,
-              //           ) {
-              //             int index = state.extra as int;
-              //             return CustomTransitionPage(
-              //                 key: state.pageKey,
-              //                 child: PostDetailsScreen(
-              //                   index: index,
-              //                   isMyListPreview: false,
-              //                 ),
-              //                 transitionDuration: const Duration(milliseconds: 150),
-              //                 transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
-              //                     position: animation.drive(
-              //                       Tween<Offset>(
-              //                         begin: const Offset(1, 0),
-              //                         end: Offset.zero,
-              //                       ).chain(CurveTween(curve: Curves.easeInOut)),
-              //                     ),
-              //                     // textDirection:
-              //                     //    leftToRight ? TextDirection.ltr : TextDirection.rtl,
-              //                     child: child));
-              //           },
-              //         ),
-              //       ]),
-              // ]),
-
-              // StatefulShellBranch(routes: <RouteBase>[
-              //   GoRoute(
-              //       name: "myPostScreen",
-              //       path: "/user-post-screen",
-              //       pageBuilder: (
-              //         context,
-              //         state,
-              //       ) =>
-              //           buildPageWithDefaultTransition(
-              //             child: MyPostsScreen(),
-              //             context: context,
-              //             state: state,
-              //           ),
-              //       routes: [
-              //         GoRoute(
-              //           name: "myPostDetails",
-              //           path: "my-post-details",
-              //           pageBuilder: (
-              //             context,
-              //             state,
-              //           ) {
-              //             int index = state.extra as int;
-              //             return CustomTransitionPage(
-              //                 key: state.pageKey,
-              //                 child: PostDetailsScreen(
-              //                   index: index,
-              //                   isMyListPreview: true,
-              //                 ),
-              //                 transitionDuration: const Duration(milliseconds: 150),
-              //                 transitionsBuilder: (context, animation, secondaryAnimation, child) => SlideTransition(
-              //                     position: animation.drive(
-              //                       Tween<Offset>(
-              //                         begin: const Offset(1, 0),
-              //                         end: Offset.zero,
-              //                       ).chain(CurveTween(curve: Curves.easeInOut)),
-              //                     ),
-              //                     // textDirection:
-              //                     //    leftToRight ? TextDirection.ltr : TextDirection.rtl,
-              //                     child: child));
-              //           },
-              //         ),
-              //       ])
-              // ]),
-              // StatefulShellBranch(routes: <RouteBase>[
-              //   GoRoute(
-              //     name: "user-fourth-page",
-              //     path: "/user-fourth-page",
-              //     pageBuilder: (
-              //       context,
-              //       state,
-              //     ) =>
-              //         buildPageWithDefaultTransition(
-              //       child: FourthPage(),
-              //       context: context,
-              //       state: state,
-              //     ),
-              //   )
-              // ]),
               if (appService.isMobileDevice)
                 StatefulShellBranch(routes: <RouteBase>[
                   GoRoute(
@@ -391,6 +415,10 @@ class AppNavigation {
                             context: context,
                             state: state,
                           ),
+                          onExit: (context) async {
+                            context.read<UpdateUserProvider>().onExitReinitControllers(context);
+                            return true;
+                          },
                         )
                       ])
                 ]),
@@ -421,6 +449,10 @@ class AppNavigation {
                             context: context,
                             state: state,
                           ),
+                          onExit: (context) async {
+                            context.read<UpdateUserProvider>().onExitReinitControllers(context);
+                            return true;
+                          },
                         )
                       ])
                 ])
