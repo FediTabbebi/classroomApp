@@ -29,7 +29,7 @@ class LoginProvider with ChangeNotifier {
       await authService.signInWithEmailAndPassword(email, password).then((value) async {
         isLoading = false;
         if (value!.isDeleted) {
-          showDialogMessage(context, "Your account has been banned\nplease contact support at\nautistic@gmail.com");
+          showDialogMessage(context, "Your account has been banned\nplease contact support at support@classConnect.tn");
         } else {
           await prefs.saveUserId(value.userId);
           await appService.authNotifier();
