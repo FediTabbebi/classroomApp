@@ -26,7 +26,7 @@ class FileIconHelper {
                 image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
               ),
             ),
-            placeholder: (context, url) => const LoadingIndicatorWidget(size: 20),
+            placeholder: (context, url) => Container(height: iconSize, width: iconSize, alignment: Alignment.center, child: const LoadingIndicatorWidget(size: 20)),
             errorWidget: (context, url, error) => Icon(
               Icons.image_not_supported,
               size: iconSize,

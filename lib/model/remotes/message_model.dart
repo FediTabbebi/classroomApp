@@ -1,31 +1,28 @@
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class CommentModel {
+class MessageModel {
   String id;
   String description;
-  DocumentReference commentedByRef;
-  UserModel? commentedBy;
-  bool isSeen;
+  DocumentReference senderRef;
+  UserModel? sender;
   DateTime createdAt;
   DateTime updatedAt;
 
-  CommentModel({
+  MessageModel({
     required this.id,
     required this.description,
-    required this.commentedByRef,
-    this.commentedBy,
-    required this.isSeen,
+    required this.senderRef,
+    this.sender,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  factory CommentModel.fromMap(Map<String, dynamic> map) {
-    return CommentModel(
+  factory MessageModel.fromMap(Map<String, dynamic> map) {
+    return MessageModel(
       id: map['id'] ?? '',
       description: map['description'] ?? '',
-      commentedByRef: map['commentedByRef'] as DocumentReference,
-      isSeen: map['isSeen'] ?? '',
+      senderRef: map['senderRef'] as DocumentReference,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
     );
@@ -34,9 +31,8 @@ class CommentModel {
     return {
       'id': id,
       'description': description,
-      'isSeen': isSeen,
       'createdAt': createdAt,
-      'commentedByRef': commentedByRef,
+      'senderRef': senderRef,
       'updatedAt': updatedAt,
     };
   }

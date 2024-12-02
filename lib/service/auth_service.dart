@@ -1,5 +1,5 @@
-import 'package:classroom_app/model/user_model.dart';
-import 'package:classroom_app/model/user_role.dart';
+import 'package:classroom_app/model/remotes/role_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -63,8 +63,8 @@ class AuthenticationServices {
           // Safely cast the role data to Map<String, dynamic>
           Map<String, dynamic> roleData = roleDocument.data() as Map<String, dynamic>;
 
-          // Parse the role data into a UserRole object
-          UserRole role = UserRole.fromMap(roleData);
+          // Parse the role data into a RoleModel object
+          RoleModel role = RoleModel.fromMap(roleData);
 
           // Map the user data to UserModel and set the fetched role
           UserModel user = UserModel.fromMap(userData);
@@ -111,9 +111,9 @@ class AuthenticationServices {
       'email': user.email,
       'profilePicture': user.profilePicture,
       'roleRef': roleRef, // Store the role reference
-      'birthDate': Timestamp.now(), // Assuming you are updating this field
-      'createdAt': Timestamp.now(), // Assuming you are updating this field (can be removed if not needed)
-      'updatedAt': Timestamp.now(),
+      'birthDate': user.createdAt, // Assuming you are updating this field
+      'createdAt': user.createdAt, // Assuming you are updating this field (can be removed if not needed)
+      'updatedAt': user.updatedAt,
       'isDeleted': user.isDeleted,
     });
   }

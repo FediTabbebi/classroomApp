@@ -1,9 +1,12 @@
 import 'dart:io' as io;
 
+import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
+import 'package:provider/provider.dart';
 
 class StorageService {
   final firebase_storage.FirebaseStorage storage = firebase_storage.FirebaseStorage.instance;
@@ -77,40 +80,102 @@ class StorageService {
   //   }
   // }
 
-  Future<String?> uploadFileWithProgress(
-    String classroomId,
-    PlatformFile file,
-    Function(double progress) onProgress,
-  ) async {
+  Future<String?> uploadFileWithProgressSnackbar({
+    required BuildContext context,
+    required String classroomId,
+    required PlatformFile file,
+  }) async {
     try {
-      // Reference to the file location in Firebase Storage
-      final ref = firebase_storage.FirebaseStorage.instance.ref().child('Classroom files/$classroomId/${file.name}');
+      final storageRef = firebase_storage.FirebaseStorage.instance.ref().child('Classroom files/$classroomId/${file.name}');
 
-      // Check if the file is picked for web or mobile
+      // Handle web vs mobile
       firebase_storage.UploadTask uploadTask;
       if (kIsWeb) {
-        uploadTask = ref.putData(
+        uploadTask = storageRef.putData(
           file.bytes!,
-          firebase_storage.SettableMetadata(contentType: file.extension ?? "application/octet-stream"),
+          firebase_storage.SettableMetadata(contentType: lookupMimeType(file.name)),
         );
       } else {
-        final filePath = io.File(file.path!);
-        uploadTask = ref.putFile(filePath);
+        final filePath = file.path!;
+        uploadTask = storageRef.putFile(
+          io.File(filePath),
+          firebase_storage.SettableMetadata(contentType: lookupMimeType(file.name)),
+        );
       }
 
-      // Track upload progress
-      uploadTask.snapshotEvents.listen((firebase_storage.TaskSnapshot snapshot) {
-        double progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        onProgress(progress);
-        print(progress);
-      });
+      // Create a SnackBar for progress updates
+      double uploadProgress = 0.0;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          elevation: 3,
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              // Listen to upload progress
+              uploadTask.snapshotEvents.listen((firebase_storage.TaskSnapshot snapshot) {
+                uploadProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                print(uploadProgress);
+
+                // Trigger a rebuild in the SnackBar
+                setState(() {});
+              });
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Uploading: ${file.name}',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyMedium!.color!),
+                  ),
+                  const SizedBox(height: 4),
+                  LinearProgressIndicator(value: uploadProgress / 100, backgroundColor: Theme.of(context).highlightColor.withOpacity(0.5), color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(height: 8),
+                  Text('${uploadProgress.toStringAsFixed(0)}% Complete',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium!.color!,
+                      )),
+                ],
+              );
+            },
+          ),
+          backgroundColor: Theme.of(context).cardTheme.color,
+          duration: const Duration(days: 1), // Will be manually closed later
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 
       // Wait for the upload to complete
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
+      firebase_storage.TaskSnapshot snapshot = await uploadTask.whenComplete(() => null);
+
+      // Get the download URL
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      print("File uploaded successfully: $downloadUrl");
+
+      // Replace the progress SnackBar with a completion message
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Upload complete! Your file has been uploaded successfully", style: TextStyle(color: Colors.white)),
+          backgroundColor: context.read<ThemeProvider>().isDarkMode ? const Color(0xff154406) : const Color(0xff007958),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
       return downloadUrl;
     } catch (e) {
       print("Error during file upload: $e");
+
+      // Show error message
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error during upload: $e"),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
       return null;
     }
   }

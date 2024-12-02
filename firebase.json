@@ -1,1 +1,22 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"autisticapp-f29de","appId":"1:1009107744067:android:419de502ed651571b1abf6","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"autisticapp-f29de","configurations":{"android":"1:1009107744067:android:419de502ed651571b1abf6","web":"1:1009107744067:web:bb351ddb197bee2ab1abf6"}}}}}}
+{
+  "hosting": {
+    "public": "build/web",
+    "rewrites": [
+      {
+        "source": "/**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=600, s-maxage=600"
+          }
+        ]
+      }
+    ]
+  }
+}

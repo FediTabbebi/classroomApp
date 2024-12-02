@@ -1,5 +1,5 @@
 import 'package:classroom_app/constant/app_images.dart';
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:classroom_app/provider/register_provider.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/src/widget/elevated_button_widget.dart';

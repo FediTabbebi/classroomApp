@@ -1,21 +1,21 @@
-class UserRole {
+class RoleModel {
   String id;
   String label;
 
-  UserRole({
+  RoleModel({
     required this.id,
     required this.label,
   });
 
-  // Factory constructor to create a UserRole from a map
-  factory UserRole.fromMap(Map<String, dynamic> map) {
-    return UserRole(
+  // Factory constructor to create a RoleModel from a map
+  factory RoleModel.fromMap(Map<String, dynamic> map) {
+    return RoleModel(
       id: map['id'] ?? '',
       label: map['label'] ?? '',
     );
   }
 
-  // Method to convert UserRole to a map for Firestore
+  // Method to convert RoleModel to a map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'id': id,

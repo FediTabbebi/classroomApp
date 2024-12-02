@@ -1,4 +1,4 @@
-import 'package:classroom_app/model/user_role.dart';
+import 'package:classroom_app/model/remotes/role_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
@@ -8,7 +8,7 @@ class UserModel {
   String email;
   String password;
   String profilePicture;
-  UserRole? role; // Change the type to UserRole
+  RoleModel? role; // Change the type to RoleModel
   DocumentReference roleRef;
   DateTime createdAt;
   DateTime updatedAt;
@@ -37,7 +37,7 @@ class UserModel {
       email: map['email'] ?? '',
       password: map['password'] ?? '',
       profilePicture: map['profilePicture'] ?? '',
-      role: map['role'] != null ? UserRole.fromMap(map['role']) : null, // Check if role is available and parse it
+      role: map['role'] != null ? RoleModel.fromMap(map['role']) : null, // Check if role is available and parse it
       roleRef: map['roleRef'] as DocumentReference, // Cast roleRef to DocumentReference
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
@@ -45,7 +45,7 @@ class UserModel {
     );
   }
 
-  // Updated toJson method to convert UserRole to map
+  // Updated toJson method to convert RoleModel to map
   Map<String, dynamic> toJson() {
     return {
       'userId': userId,

@@ -1,5 +1,5 @@
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/service/auth_service.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';

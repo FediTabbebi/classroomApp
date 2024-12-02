@@ -12,8 +12,8 @@ import 'package:go_router/go_router.dart';
 
 class LoginProvider with ChangeNotifier {
   final GlobalKey<FormState> loginFormKey = GlobalKey<FormState>();
-  final TextEditingController emailController = TextEditingController(text: "admin@gmail.com");
-  final TextEditingController passwordController = TextEditingController(text: "fedifedi");
+  final TextEditingController emailController = TextEditingController(text: "admin@pi.tn");
+  final TextEditingController passwordController = TextEditingController(text: "adminPi");
   bool isLoading = false;
   bool isObscure = true;
   bool passwordFieldVisibility = false;

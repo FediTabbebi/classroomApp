@@ -1,5 +1,6 @@
-import 'package:classroom_app/model/classroom_model.dart';
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/constant/app_colors.dart';
+import 'package:classroom_app/model/remotes/classroom_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:classroom_app/provider/classroom_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/widget/elevated_button_widget.dart';
@@ -22,6 +23,7 @@ class AddOrUpdateClassroomDialog extends StatefulWidget {
 
 class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
   bool _initialized = false;
+  final FocusNode _textFieldFocusNode = FocusNode();
 
   @override
   void didChangeDependencies() {
@@ -42,33 +44,17 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
     }
   }
 
-  final List<Color> colorOptions = [
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.deepPurple,
-    Colors.indigo,
-    Colors.blue,
-    Colors.lightBlue,
-    Colors.cyan,
-    Colors.teal,
-    Colors.green,
-    Colors.lightGreen,
-    Colors.lime,
-    Colors.yellow,
-    Colors.amber,
-    Colors.orange,
-    Colors.deepOrange,
-    Colors.brown,
-    Colors.grey,
-    Colors.blueGrey,
-  ];
+  @override
+  void dispose() {
+    _textFieldFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus();
+        _textFieldFocusNode.unfocus();
       },
       child: Dialog(
         backgroundColor: Theme.of(context).cardTheme.color,
@@ -110,6 +96,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                   ),
                   const SizedBox(height: 10),
                   textFieldWidget(
+                      focusNode: _textFieldFocusNode,
                       hintText: "Enter classroom label",
                       textEditingController: context.read<ClassroomProvider>().classroomLabelController,
                       validator: (value) => validateEmptyFieldWithResponse(value!, "Classroom label cannot be empty"),
@@ -136,7 +123,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                       width: 81,
                       height: 40,
                       radius: 5,
-                      onPressed: () {
+                      onPressed: () async {
                         if (context.read<ClassroomProvider>().classRoomFormKey.currentState!.validate()) {
                           final List<String> selectedUsers = [];
                           context.read<ClassroomProvider>().selectedUsers.forEach((e) => selectedUsers.add(e.userId));
@@ -147,15 +134,16 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                             }).toList();
                           }
                           widget.classroom != null
-                              ? context.read<ClassroomProvider>().updateClassroom(context, widget.classroom!)
-                              : context.read<ClassroomProvider>().addClassroom(
+                              ? await context.read<ClassroomProvider>().updateClassroom(context, widget.classroom!)
+                              : await context.read<ClassroomProvider>().addClassroom(
                                     context,
                                     ClassroomModel(
                                       id: '',
+                                      folders: [],
                                       invitedUsersRef: invitedUsersRef, // Insert the mapped document references
                                       label: context.read<ClassroomProvider>().classroomLabelController.text,
                                       colorHex: colorToHex(context.read<ClassroomProvider>().selectedColor!), // Provide a default or selected color in hex format
-                                      comments: [],
+                                      messages: [],
                                       files: [],
                                       createdByRef: FirebaseFirestore.instance.doc('users/${context.read<UserProvider>().currentUser!.userId}'),
                                       createdAt: DateTime.now(),
@@ -180,6 +168,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
   textFieldWidget(
       {required TextEditingController textEditingController,
       required String hintText,
+      required FocusNode focusNode,
       required String? Function(String?)? validator,
       required BuildContext context,
       Widget? suffixIcon,
@@ -189,6 +178,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
     return Container(
       constraints: const BoxConstraints(minHeight: 40, maxHeight: 300),
       child: TextFormField(
+          focusNode: focusNode,
           controller: textEditingController,
           obscureText: obscureText ?? false,
           decoration: InputDecoration(
@@ -382,7 +372,7 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
                 Wrap(
                   spacing: 10.0,
                   runSpacing: 10.0,
-                  children: colorOptions.map((color) {
+                  children: AppColors.colorOptions.map((color) {
                     return InkWell(
                       borderRadius: BorderRadius.circular(60),
                       onTap: () {
@@ -403,32 +393,36 @@ class _AddOrUpdateUserDialogState extends State<AddOrUpdateClassroomDialog> {
               ],
             ))
       ],
-      child: Container(
-          alignment: const AlignmentDirectional(-1, 0),
-          padding: const EdgeInsetsDirectional.only(start: 12, end: 8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xffD3D7DB))),
-          height: 50,
-          width: double.infinity,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  "Pick a color for the classroom thumbnail",
-                  style: TextStyle(color: Theme.of(context).hintColor, fontSize: 14),
-                ),
-              ),
-              Container(
-                width: 25,
-                height: 25,
-                margin: const EdgeInsets.only(right: 10),
-                decoration: BoxDecoration(
-                  color: context.watch<ClassroomProvider>().selectedColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const Icon(Icons.arrow_drop_down)
-            ],
-          )),
+      child: Selector<ClassroomProvider, Color?>(
+          selector: (context, provider) => provider.selectedColor,
+          builder: (context, selectedColor, child) {
+            return Container(
+                alignment: const AlignmentDirectional(-1, 0),
+                padding: const EdgeInsetsDirectional.only(start: 12, end: 8),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xffD3D7DB))),
+                height: 50,
+                width: double.infinity,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Pick a color for the classroom thumbnail",
+                        style: TextStyle(color: Theme.of(context).hintColor, fontSize: 14),
+                      ),
+                    ),
+                    Container(
+                      width: 25,
+                      height: 25,
+                      margin: const EdgeInsets.only(right: 10),
+                      decoration: BoxDecoration(
+                        color: selectedColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const Icon(Icons.arrow_drop_down)
+                  ],
+                ));
+          }),
     );
   }
 }

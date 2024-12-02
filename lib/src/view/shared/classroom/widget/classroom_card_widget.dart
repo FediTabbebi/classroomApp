@@ -1,4 +1,4 @@
-import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/model/remotes/classroom_model.dart';
 import 'package:classroom_app/provider/classroom_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/widget/add_update_classroom_dialog.dart';
@@ -60,7 +60,7 @@ class ClassroomCardWidget extends StatelessWidget {
                                         child: ListView.builder(
                                           shrinkWrap: true,
                                           scrollDirection: Axis.horizontal,
-                                          itemCount: classroom.invitedUsers!.length > 4 ? classroom.invitedUsers!.sublist(0, 4).length : classroom.invitedUsers!.length,
+                                          itemCount: classroom.invitedUsers!.length > 6 ? classroom.invitedUsers!.sublist(0, 6).length : classroom.invitedUsers!.length,
                                           itemBuilder: (context, index) {
                                             return Tooltip(
                                               showDuration: const Duration(milliseconds: 0),
@@ -93,12 +93,12 @@ class ClassroomCardWidget extends StatelessWidget {
                                           },
                                         ),
                                       ),
-                                      if (classroom.invitedUsers!.length > 4 && classroom.invitedUsers!.length - classroom.invitedUsers!.sublist(0, 4).length > 0)
+                                      if (classroom.invitedUsers!.length > 6 && classroom.invitedUsers!.length - classroom.invitedUsers!.sublist(0, 6).length > 0)
                                         Tooltip(
                                           showDuration: const Duration(milliseconds: 0),
                                           message: "+"
-                                              "${classroom.invitedUsers!.length - classroom.invitedUsers!.sublist(0, 4).length}"
-                                              " member(s) is/are assigned to this classroom",
+                                              "${classroom.invitedUsers!.length - classroom.invitedUsers!.sublist(0, 6).length}"
+                                              "${classroom.invitedUsers!.length - classroom.invitedUsers!.sublist(0, 6).length > 1 ? " members are assigned to this classroom" : " member is assigned to this classroom"}",
                                           child: Container(
                                             width: 30,
                                             height: 30,
@@ -114,11 +114,11 @@ class ClassroomCardWidget extends StatelessWidget {
                                               color: Colors.grey,
                                               shape: BoxShape.circle,
                                             ),
-                                            margin: const EdgeInsets.all(8),
+                                            // margin: const EdgeInsets.all(8),
                                             child: Center(
                                               child: Text(
                                                 "+"
-                                                '${classroom.invitedUsers!.length - classroom.invitedUsers!.sublist(0, 4).length}',
+                                                '${classroom.invitedUsers!.length - classroom.invitedUsers!.sublist(0, 6).length}',
                                                 style: const TextStyle(fontSize: 12, color: Colors.white),
                                               ),
                                             ),
@@ -176,7 +176,7 @@ class ClassroomCardWidget extends StatelessWidget {
   }
 
   Widget menuWidget(BuildContext context, ClassroomModel classroom) => MenuAnchor(
-          alignmentOffset: const Offset(-80, -30),
+          alignmentOffset: const Offset(-120, -30),
           builder: (BuildContext context, MenuController controller, Widget? child) {
             return IconButton(
                 onPressed: () {
@@ -207,6 +207,13 @@ class ClassroomCardWidget extends StatelessWidget {
                       );
                     });
               },
+              leadingIcon: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Icon(
+                    FontAwesomeIcons.pen,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.primary,
+                  )),
               child: const SizedBox(
                 width: 100,
                 child: Text(
@@ -216,10 +223,7 @@ class ClassroomCardWidget extends StatelessWidget {
               ),
             ),
             MenuItemButton(
-              child: const Text(
-                "Delete",
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
+              leadingIcon: const Padding(padding: EdgeInsets.only(right: 8.0), child: Icon(FontAwesomeIcons.trash, size: 20, color: Colors.red)),
               onPressed: () async {
                 showDialog<void>(
                   context: context,
@@ -236,6 +240,10 @@ class ClassroomCardWidget extends StatelessWidget {
                   },
                 );
               },
+              child: const Text(
+                "Delete",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
           ]);
 }

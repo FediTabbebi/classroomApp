@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:classroom_app/constant/app_colors.dart';
 import 'package:classroom_app/constant/app_images.dart';
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:classroom_app/provider/update_user_provider.dart';
 import 'package:classroom_app/src/widget/add_update_user_dialog.dart';
 import 'package:classroom_app/src/widget/dialog_widget.dart';
@@ -48,7 +49,20 @@ class UserManagementDatasource extends DataGridSource {
                 itemBuilder: (context) => [
                       PopupMenuItem<String>(
                         value: 'Edit',
-                        child: const Text('Edit'),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: Icon(
+                                FontAwesomeIcons.pen,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const Text('Edit'),
+                          ],
+                        ),
                         onTap: () {
                           showAnimatedDialog<void>(
                               barrierDismissible: false,
@@ -64,8 +78,21 @@ class UserManagementDatasource extends DataGridSource {
                       ),
                       PopupMenuItem<String>(
                         value: 'Ban',
-                        child: Text(
-                          user.isDeleted ? " Unban" : "ban",
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 16.0),
+                              child: Icon(
+                                user.isDeleted ? FontAwesomeIcons.recycle : FontAwesomeIcons.ban,
+                                color: user.isDeleted ? Colors.green : Colors.red,
+                                size: 20,
+                              ),
+                            ),
+                            Text(
+                              user.isDeleted ? " Unban" : "Ban",
+                            ),
+                          ],
                         ),
                         onTap: () async {
                           showDialog<void>(
@@ -141,8 +168,20 @@ class UserManagementDatasource extends DataGridSource {
                       ),
                 const SizedBox(width: 10), // Add spacing between image and text
                 Expanded(
-                    child: Text("${user.firstName} ${user.lastName}",
-                        maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 14, fontWeight: FontWeight.w500))),
+                    child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("${user.firstName} ${user.lastName}",
+                        maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 14, fontWeight: FontWeight.w500)),
+                    Text(
+                      user.email,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: AppColors.darkGrey),
+                    ),
+                  ],
+                )),
               ],
             ),
           );

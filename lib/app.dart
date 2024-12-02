@@ -2,8 +2,8 @@ import 'package:classroom_app/constant/app_icons.dart';
 import 'package:classroom_app/locator.dart';
 import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/classroom_provider.dart';
-import 'package:classroom_app/provider/comment_provider.dart';
 import 'package:classroom_app/provider/login_provider.dart';
+import 'package:classroom_app/provider/message_provider.dart';
 import 'package:classroom_app/provider/register_provider.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/provider/update_user_provider.dart';
@@ -45,15 +45,17 @@ class _MyAppState extends State<MyApp> {
               if (authResult == null) {
                 return Center(child: Image.asset(AppIcons.appLogo));
               } else {
-                AppNavigation appNavigation = AppNavigation(initSateLocation: appService.initHomeLocation, userType: appService.userRole);
+                AppNavigation appNavigation = AppNavigation(initSateLocation: appService.initHomeLocation, userType: appService.userType);
 
                 return Selector<ThemeProvider, bool>(
-                    selector: (p0, p1) => p1.isDarkMode,
+                    selector: (context, provider) => provider.isDarkMode,
                     builder: (context, isDarkMode, child) {
                       return MaterialApp.router(
                         theme: context.read<ThemeProvider>().getThemeData(),
                         debugShowCheckedModeBanner: false,
-                        routerConfig: appNavigation.router,
+                        routeInformationParser: appNavigation.router.routeInformationParser,
+                        routeInformationProvider: appNavigation.router.routeInformationProvider,
+                        routerDelegate: appNavigation.router.routerDelegate,
                       );
                     });
               }
@@ -69,5 +71,5 @@ List<SingleChildWidget> providers = [
   ChangeNotifierProvider(create: (_) => locator<UserProvider>()),
   ChangeNotifierProvider(create: (_) => locator<UpdateUserProvider>()),
   ChangeNotifierProvider(create: (_) => locator<ClassroomProvider>()),
-  ChangeNotifierProvider(create: (_) => locator<CommentProvider>()),
+  ChangeNotifierProvider(create: (_) => locator<MessageProvider>()),
 ];

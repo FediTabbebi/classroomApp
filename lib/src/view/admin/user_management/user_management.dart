@@ -1,19 +1,15 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:classroom_app/constant/app_colors.dart';
-import 'package:classroom_app/constant/app_images.dart';
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
-import 'package:classroom_app/provider/update_user_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/view/admin/user_management/user_management_datasource.dart';
 import 'package:classroom_app/src/widget/add_update_user_dialog.dart';
 import 'package:classroom_app/src/widget/app_bar_widget.dart';
-import 'package:classroom_app/src/widget/dialog_widget.dart';
 import 'package:classroom_app/src/widget/elevated_button_widget.dart';
 import 'package:classroom_app/src/widget/loading_indicator_widget.dart';
+import 'package:classroom_app/src/widget/user_listtile_widget.dart';
 import 'package:classroom_app/theme/themes.dart';
 import 'package:classroom_app/utils/responsive_helper.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -177,59 +173,59 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         : Selector<UserProvider, List<UserModel>?>(
                             selector: (context, provider) => provider.userModelList,
                             builder: (context, usersList, child) {
-                              List<UserModel> filteredUsers = usersList!.where((attempt) {
-                                final filtred = usersList.firstWhere((user) => user.userId == attempt.userId,
-                                    orElse: () => UserModel(
-                                          userId: "",
-                                          firstName: "",
-                                          lastName: "",
-                                          email: "",
-                                          password: "",
-                                          profilePicture: "",
-                                          roleRef: FirebaseFirestore.instance.collection('roles').doc(),
-                                          createdAt: DateTime.now(),
-                                          updatedAt: DateTime.now(),
-                                          isDeleted: false,
-                                        ));
-                                if (filtred.userId == '') {
-                                  return false;
-                                }
-                                String userName = filtred.email.toLowerCase();
-                                return userName.contains(searchQuery.toLowerCase());
+                              // Filter users based on search query
+                              List<UserModel> filteredUsers = usersList!.where((user) {
+                                // Combine email, first name, and last name into one search scope
+                                String userDetails = [
+                                  user.email,
+                                  user.firstName,
+                                  user.lastName,
+                                ].join(' ').toLowerCase();
+
+                                // Check if the search query matches any part of the user details
+                                return userDetails.contains(searchQuery.toLowerCase());
                               }).toList();
 
+                              // Update the data source for the user management
                               context.read<UserProvider>().userManagementDataSource = UserManagementDatasource(
                                 users: filteredUsers,
                                 context: context,
                               );
 
+                              // Display filtered results or fallback if none match
                               return filteredUsers.isEmpty
                                   ? const Expanded(
                                       child: Center(
-                                      child: Text("There is no user match this email address"),
-                                    ))
+                                        child: Text("There is no user that matches your search."),
+                                      ),
+                                    )
                                   : ResponsiveWidget.isLargeScreen(context)
                                       ? largeScreen(filteredUsers)
                                       : smallScreen(filteredUsers);
-                            }),
+                            },
+                          )
               ],
             ),
           )),
     );
   }
 
-  smallScreen(List<UserModel> filteredUsers) {
-    return ListView.separated(
-      shrinkWrap: true,
-      itemCount: filteredUsers.length,
-      itemBuilder: (context, index) {
-        return customLisTileWidget(context, filteredUsers[index], index * 100);
-      },
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
+  Widget smallScreen(List<UserModel> filteredUsers) {
+    return Expanded(
+      child: ListView.separated(
+        shrinkWrap: true,
+        itemCount: filteredUsers.length,
+        itemBuilder: (context, index) {
+          return UserListtileWidget(
+            user: filteredUsers[index],
+          );
+        },
+        separatorBuilder: (context, index) => const SizedBox(height: 10),
+      ),
     );
   }
 
-  largeScreen(List<UserModel> filteredUsers) {
+  Widget largeScreen(List<UserModel> filteredUsers) {
     return Container(
       // alignment: Alignment.center,
       // margin: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 10),
@@ -285,7 +281,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         initialPageIndex: 1,
         lastPageItemVisible: false,
         firstPageItemVisible: false,
-        pageCount: users.isEmpty ? 1 : (users.length / 10).ceil().toDouble(),
+        pageCount: users.isEmpty ? 1 : (users.length / 5).ceil().toDouble(),
         pageItemBuilder: (String itemName) {
           if (itemName == 'Next') {
             return const Text(
@@ -498,185 +494,4 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       ),
     );
   }
-
-  Widget customLisTileWidget(BuildContext context, UserModel user, int durationDelay) => Consumer<ThemeProvider>(builder: (ctx, provider, child) {
-        return Material(
-          elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(ctx).cardTheme.color,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Leading section: User Profile Picture
-                user.profilePicture.isEmpty
-                    ? Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: context.read<ThemeProvider>().isDarkMode ? const Color.fromARGB(255, 25, 25, 30) : Themes.secondaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                          image: DecorationImage(
-                            image: Image.asset(AppImages.userProfile).image,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      )
-                    : SizedBox(
-                        width: 80,
-                        height: 80,
-                        child: CachedNetworkImage(
-                          imageUrl: user.profilePicture,
-                          placeholder: (context, url) => const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: UnconstrainedBox(
-                              child: SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: LoadingIndicatorWidget(
-                                  size: 30,
-                                ),
-                              ),
-                            ),
-                          ),
-                          imageBuilder: (context, imageProvider) => Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => const Icon(Icons.error),
-                        ),
-                      ),
-                const SizedBox(width: 16), // Spacing between leading and text
-
-                // Main content: User details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title (User first name)
-                      Text(
-                        "${user.firstName} ${user.lastName}",
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-
-                      // Subtitle: User email and "Member since" info
-                      Text(
-                        user.email,
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: AppColors.darkGrey),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        "Member since ${"${user.createdAt.toLocal()}".split(' ')[0]}",
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Trailing section: Status and options
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      user.isDeleted ? "Banned" : "Active",
-                      softWrap: true,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: user.isDeleted ? Colors.red : Colors.green,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    menuWidget(context, user)
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      });
-
-  Widget menuWidget(BuildContext ctxx, UserModel user) => MenuAnchor(
-          alignmentOffset: const Offset(-80, -30),
-          builder: (BuildContext context, MenuController controller, Widget? child) {
-            return IconButton(
-                onPressed: () {
-                  if (controller.isOpen) {
-                    controller.close();
-                  } else {
-                    controller.open();
-                  }
-                },
-                icon: const Icon(
-                  FontAwesomeIcons.ellipsisVertical,
-                  size: 24,
-                ),
-                tooltip: "Options");
-          },
-          menuChildren: [
-            MenuItemButton(
-              onPressed: () async {
-                showDialog<void>(
-                  context: context,
-                  builder: (BuildContext ctx) {
-                    return DialogWidget(
-                      dialogTitle: user.isDeleted ? "Unban Confirmation" : "Ban Confirmation",
-                      dialogContent: user.isDeleted ? "Are you sure you want to unban this user?" : "Are you sure you want to ban this user?",
-                      isConfirmDialog: true,
-                      onConfirm: () async {
-                        Navigator.pop(ctx);
-                        await ctxx.read<UpdateUserProvider>().banOrUnbanUser(context, user, user.role!.id);
-                      },
-                    );
-                  },
-                );
-              },
-              child: SizedBox(
-                width: 100,
-                child: Text(
-                  user.isDeleted ? " Unban" : "Ban",
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ),
-            ),
-            MenuItemButton(
-              child: const Text(
-                "Edit",
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              onPressed: () async {
-                showAnimatedDialog<void>(
-                    barrierDismissible: false,
-                    animationType: DialogTransitionType.fadeScale,
-                    duration: const Duration(milliseconds: 300),
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AddOrUpdateUserDialog(
-                        user: user,
-                      );
-                    });
-              },
-            ),
-          ]);
 }

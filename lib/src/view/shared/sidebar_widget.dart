@@ -130,9 +130,9 @@ class SideBarWidget extends StatelessWidget {
                     if (data.isOpen) const SideMenuItemDataTitle(title: 'Account', padding: EdgeInsetsDirectional.only(start: 10, top: 20, bottom: 15)),
                     ...accountItems.map(
                       (e) => SideMenuItemDataTile(
-                        isSelected: navigationShell.currentIndex == (context.read<AppService>().userRole == UserType.admin ? (accountItems.indexOf(e) + 2) : (accountItems.indexOf(e) + 1)),
+                        isSelected: navigationShell.currentIndex == (context.read<AppService>().userType == UserType.admin ? (accountItems.indexOf(e) + 2) : (accountItems.indexOf(e) + 1)),
                         onTap: () {
-                          int settingBranchIndex = context.read<AppService>().userRole == UserType.admin ? accountItems.indexOf(e) + 2 : accountItems.indexOf(e) + 1;
+                          int settingBranchIndex = context.read<AppService>().userType == UserType.admin ? accountItems.indexOf(e) + 2 : accountItems.indexOf(e) + 1;
                           goToBranch(settingBranchIndex);
                         },
                         title: e.name,
@@ -208,7 +208,7 @@ class SideBarWidget extends StatelessWidget {
               height: double.maxFinite,
               child: Align(
                   alignment: AlignmentDirectional.center,
-                  child: Image.network(
+                  child: Image.asset(
                     AppIcons.appLogo,
                     height: 30,
                     width: 30,

@@ -1,13 +1,14 @@
-import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/model/remotes/classroom_model.dart';
 import 'package:classroom_app/provider/classroom_provider.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
-import 'package:classroom_app/src/view/shared/classroom/classroom_details_screen.dart';
+import 'package:classroom_app/src/view/shared/classroom/chat_screen.dart';
 import 'package:classroom_app/src/view/shared/classroom/files_screen.dart';
+import 'package:classroom_app/src/view/shared/classroom/members_screen.dart';
 import 'package:classroom_app/src/widget/app_bar_widget.dart';
-import 'package:classroom_app/src/widget/loading_indicator_widget.dart';
 import 'package:classroom_app/utils/extension_helper.dart';
 import 'package:classroom_app/utils/helper.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class ClassroomHomeMain extends StatefulWidget {
@@ -20,6 +21,8 @@ class ClassroomHomeMain extends StatefulWidget {
 }
 
 class _ClassroomHomeMainState extends State<ClassroomHomeMain> {
+  bool _isExiting = false;
+
   @override
   void initState() {
     super.initState();
@@ -29,16 +32,30 @@ class _ClassroomHomeMainState extends State<ClassroomHomeMain> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final data = context.watch<List<ClassroomModel>?>();
+    if (data != null) {
+      final classroomExists = data.any((e) => e.id == widget.classroomId);
+      if (!classroomExists && !_isExiting) {
+        _isExiting = true; // Prevent multiple pops
+        Future.microtask(() {
+          if (mounted) {
+            context.pop(); // Exit the screen
+          }
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Consumer2<ClassroomProvider, List<ClassroomModel>?>(
       builder: (context, provider, data, child) {
-        if (data == null) {
-          return Center(
-            child: LoadingIndicatorWidget(
-              size: 40,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          );
+        final data = context.watch<List<ClassroomModel>?>();
+        if (_isExiting || data == null || !data.any((e) => e.id == widget.classroomId)) {
+          return const SizedBox.shrink(); // Render nothing while exiting
         } else {
           final classroom = data.firstWhere((e) => e.id == widget.classroomId);
           return Column(
@@ -83,6 +100,18 @@ class _ClassroomHomeMainState extends State<ClassroomHomeMain> {
                       provider.updatePageIndex(2);
                     },
                   ),
+                  navBarItem(
+                    context: context,
+                    title: "Members",
+                    currentIndex: provider.currentIndex,
+                    index: 3,
+                    onTap: () {
+                      if (FocusScope.of(context).hasFocus) {
+                        FocusScope.of(context).unfocus();
+                      }
+                      provider.updatePageIndex(3);
+                    },
+                  ),
                 ].divide(const SizedBox(width: 5)),
               ),
               Expanded(
@@ -90,8 +119,9 @@ class _ClassroomHomeMainState extends State<ClassroomHomeMain> {
                   sizing: StackFit.expand,
                   index: provider.currentIndex - 1,
                   children: [
-                    ClassroomDetailsScreen(classroom: classroom),
+                    ChatScreen(classroom: classroom),
                     FilesScreen(classroom: classroom),
+                    MembersScreen(classroom: classroom),
                   ],
                 ),
               ),

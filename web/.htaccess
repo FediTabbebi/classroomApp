@@ -1,4 +1,11 @@
-RewriteEngine on
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule . /index.html [L]
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Prevent direct access to index.html
+    RewriteRule ^index\.html$ - [L]
+    
+    # Redirect all requests to index.html except for existing files and directories
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+    </IfModule>

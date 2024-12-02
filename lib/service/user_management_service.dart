@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:classroom_app/model/user_model.dart';
-import 'package:classroom_app/model/user_role.dart';
+import 'package:classroom_app/model/remotes/role_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
@@ -50,8 +50,8 @@ class AdminUserManagementService {
           // Safely cast the role data to Map<String, dynamic>
           Map<String, dynamic> roleData = roleDocument.data() as Map<String, dynamic>;
 
-          // Parse the role data into a UserRole object
-          UserRole role = UserRole.fromMap(roleData);
+          // Parse the role data into a RoleModel object
+          RoleModel role = RoleModel.fromMap(roleData);
 
           // Set the role in the UserModel
           user.role = role;
@@ -70,13 +70,13 @@ class AdminUserManagementService {
     return usersList;
   }
 
-  Future<List<UserRole>> getAllRoles() async {
+  Future<List<RoleModel>> getAllRoles() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('roles').get();
 
-      // Mapping documents to UserRole objects
-      List<UserRole> roles = snapshot.docs.map((doc) {
-        return UserRole.fromMap(doc.data() as Map<String, dynamic>);
+      // Mapping documents to RoleModel objects
+      List<RoleModel> roles = snapshot.docs.map((doc) {
+        return RoleModel.fromMap(doc.data() as Map<String, dynamic>);
       }).toList();
 
       return roles;

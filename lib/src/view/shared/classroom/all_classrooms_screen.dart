@@ -1,5 +1,5 @@
 import 'package:classroom_app/constant/app_colors.dart';
-import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/model/remotes/classroom_model.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/view/shared/classroom/widget/classroom_card_widget.dart';
 import 'package:classroom_app/src/view/shared/classroom/widget/classroom_listitle_widget.dart';
@@ -15,14 +15,14 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-class ClassroomScreen extends StatefulWidget {
-  const ClassroomScreen({super.key});
+class AllClassroomsScreen extends StatefulWidget {
+  const AllClassroomsScreen({super.key});
 
   @override
-  State<ClassroomScreen> createState() => _ClassroomScreenState();
+  State<AllClassroomsScreen> createState() => _AllClassroomsScreenState();
 }
 
-class _ClassroomScreenState extends State<ClassroomScreen> {
+class _AllClassroomsScreenState extends State<AllClassroomsScreen> {
   late TextEditingController searchController;
   @override
   void initState() {
@@ -205,11 +205,11 @@ class _ClassroomScreenState extends State<ClassroomScreen> {
                   classroom: classroom,
                   onTap: () {
                     if (context.read<UserProvider>().currentUser!.role!.id == "1") {
-                      context.goNamed("admin-classroom-details", pathParameters: {"classroomId": classroom.id});
+                      context.pushNamed("admin-classroom-details", pathParameters: {"classroomId": classroom.id});
                     } else if (context.read<UserProvider>().currentUser!.role!.id == "2") {
-                      context.goNamed("instructor-classroom-details", pathParameters: {"classroomId": classroom.id});
+                      context.pushNamed("instructor-classroom-details", pathParameters: {"classroomId": classroom.id});
                     } else {
-                      context.goNamed("user-classroom-details", pathParameters: {"classroomId": classroom.id});
+                      context.pushNamed("user-classroom-details", pathParameters: {"classroomId": classroom.id});
                     }
                   },
                 );
@@ -225,11 +225,11 @@ class _ClassroomScreenState extends State<ClassroomScreen> {
                 classroom: classroom,
                 onTap: () {
                   if (context.read<UserProvider>().currentUser!.role!.id == "1") {
-                    context.goNamed("admin-classroom-details", pathParameters: {"classroomId": classroom.id});
+                    context.pushNamed("admin-classroom-details", pathParameters: {"classroomId": classroom.id});
                   } else if (context.read<UserProvider>().currentUser!.role!.id == "2") {
-                    context.goNamed("instructor-classroom-details", pathParameters: {"classroomId": classroom.id});
+                    context.pushNamed("instructor-classroom-details", pathParameters: {"classroomId": classroom.id});
                   } else {
-                    context.goNamed("user-classroom-details", pathParameters: {"classroomId": classroom.id});
+                    context.pushNamed("user-classroom-details", pathParameters: {"classroomId": classroom.id});
                   }
                 },
               );

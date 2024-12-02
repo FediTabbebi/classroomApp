@@ -1,6 +1,6 @@
 import 'package:classroom_app/constant/app_colors.dart';
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/model/remotes/classroom_model.dart';
 import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/service/classroom_service.dart';

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/service/auth_service.dart';
 import 'package:classroom_app/utils/helper.dart';
@@ -19,7 +19,7 @@ class AppService extends ChangeNotifier {
   final SharedPrefs prefs = locator<SharedPrefs>();
   bool isMobileDevice = false;
   UserModel? currentUser;
-  UserType userRole = UserType.admin;
+  UserType userType = UserType.admin;
   String initHomeLocation = "/login";
 
   Future<bool> authNotifier() async {
@@ -33,13 +33,13 @@ class AppService extends ChangeNotifier {
           userProvider.updateUser(currentUser!, false);
 
           if (currentUser!.role!.id == "1") {
-            userRole = UserType.admin;
+            userType = UserType.admin;
             initHomeLocation = "/admin-users-management";
           } else if (currentUser!.role!.id == "2") {
-            userRole = UserType.instructor;
+            userType = UserType.instructor;
             initHomeLocation = "/instructor-myclassrooms";
           } else {
-            userRole = UserType.user;
+            userType = UserType.user;
             initHomeLocation = "/user-myclassrooms";
           }
         }
@@ -63,10 +63,9 @@ class AppService extends ChangeNotifier {
     final loginLocation = state.namedLocation("login");
     // final landingLocation = state.namedLocation("polyscrum");
     final registerLocation = state.namedLocation("register");
-
-    final adminRoutes = state.fullPath!.startsWith('admin') || state.fullPath!.startsWith('/admin');
-    final userRoutes = state.fullPath!.startsWith('/user') || state.fullPath!.startsWith('/user');
-    final instructorRoutes = state.fullPath!.startsWith('/instructor') || state.fullPath!.startsWith('/instructor');
+    final adminRoutes = state.fullPath!.contains('admin');
+    final userRoutes = state.fullPath!.contains('/user');
+    final instructorRoutes = state.fullPath!.contains('instructor');
     final isLogedIn = currentUser != null;
     final isGoingToLogin = state.matchedLocation == loginLocation;
     final isGoingToRegister = state.matchedLocation == registerLocation;
@@ -76,23 +75,27 @@ class AppService extends ChangeNotifier {
       if (isGoingToLogin) {
         return initHomeLocation;
       }
-      if (userRole == UserType.admin && !adminRoutes) {
-        return initHomeLocation;
+      if (userType == UserType.admin && !adminRoutes) {
+        return adminRoutes ? null : initHomeLocation;
       }
-      if (userRole == UserType.instructor && !instructorRoutes) {
-        return initHomeLocation;
+      if (userType == UserType.instructor && !instructorRoutes) {
+        return instructorRoutes ? null : initHomeLocation;
       }
-      if (userRole == UserType.user && !userRoutes) {
-        return initHomeLocation;
+      if (userType == UserType.user && !userRoutes) {
+        return userRoutes ? null : initHomeLocation;
       }
 
       return null;
     } else if (isGoingToRegister) {
       return registerLocation;
+    } else if (isGoingToLogin) {
+      return loginLocation;
     }
     // else if (isGoingToLanding) {
     //   return landingLocation;
     // }
-    return loginLocation;
+    else {
+      return loginLocation;
+    }
   }
 }

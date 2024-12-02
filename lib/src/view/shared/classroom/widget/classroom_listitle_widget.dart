@@ -1,5 +1,5 @@
 import 'package:classroom_app/constant/app_colors.dart';
-import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/model/remotes/classroom_model.dart';
 import 'package:classroom_app/provider/classroom_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
 import 'package:classroom_app/src/widget/add_update_classroom_dialog.dart';
@@ -92,7 +92,7 @@ class ClassroomListitleWidget extends StatelessWidget {
   }
 
   Widget menuWidget(BuildContext context, ClassroomModel classroom) => MenuAnchor(
-          alignmentOffset: const Offset(-80, -30),
+          alignmentOffset: const Offset(-120, -30),
           builder: (BuildContext context, MenuController controller, Widget? child) {
             return IconButton(
                 onPressed: () {
@@ -122,6 +122,13 @@ class ClassroomListitleWidget extends StatelessWidget {
                       );
                     });
               },
+              leadingIcon: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Icon(
+                    FontAwesomeIcons.pen,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.primary,
+                  )),
               child: const SizedBox(
                 width: 100,
                 child: Text(
@@ -131,6 +138,7 @@ class ClassroomListitleWidget extends StatelessWidget {
               ),
             ),
             MenuItemButton(
+              leadingIcon: const Padding(padding: EdgeInsets.only(right: 8.0), child: Icon(FontAwesomeIcons.trash, size: 20, color: Colors.red)),
               child: const Text(
                 "Delete",
                 style: TextStyle(fontWeight: FontWeight.w600),

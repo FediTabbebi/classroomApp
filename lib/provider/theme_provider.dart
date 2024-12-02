@@ -7,7 +7,7 @@ class ThemeProvider with ChangeNotifier {
   final SharedPrefs prefs = locator<SharedPrefs>();
   late Themes themes = Themes();
   ThemeProvider() {
-    isDarkMode = prefs.getDarkMode() ?? false;
+    isDarkMode = prefs.getDarkMode() ?? true;
   }
 
   bool isDarkMode = true;

@@ -109,7 +109,7 @@ class _SettingScreenWebState extends State<SettingScreenWeb> {
                   height: 50,
                   width: 400,
                   onPressed: () {
-                    context.goNamed(context.read<UserProvider>().currentUser!.role!.id == "1"
+                    context.pushNamed(context.read<UserProvider>().currentUser!.role!.id == "1"
                         ? "adminProfile"
                         : context.read<UserProvider>().currentUser!.role!.id == "2"
                             ? "instructorEditProfile"

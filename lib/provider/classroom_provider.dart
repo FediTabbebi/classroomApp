@@ -1,10 +1,10 @@
-import 'dart:io';
-import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/classroom_model.dart';
-import 'package:classroom_app/model/file_model.dart';
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/classroom_model.dart';
+import 'package:classroom_app/model/remotes/file_model.dart';
+import 'package:classroom_app/model/remotes/folder_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:classroom_app/provider/theme_provider.dart';
 import 'package:classroom_app/service/classroom_service.dart';
 import 'package:classroom_app/service/storage_service.dart';
@@ -18,9 +18,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:uuid/uuid.dart';
 
@@ -29,14 +26,18 @@ class ClassroomProvider with ChangeNotifier {
   StorageService storage = locator<StorageService>();
   ThemeProvider themeProvider = locator<ThemeProvider>();
   UserModel? currentUser;
-
+  bool isInsideFolder = false;
   String fliterQuery = "";
-
+  FolderModel? currentFolder;
   final TextEditingController classroomLabelController = TextEditingController();
+
+  final TextEditingController classroomFolderController = TextEditingController();
   final GlobalKey<FormState> classRoomFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> createFolderFormKey = GlobalKey<FormState>();
   bool isSelectFromAllCategories = false;
   bool? updating;
   Color? selectedColor;
+  Color? folderSelectedColor;
   final classRoomMultiKey = GlobalKey<DropdownSearchState<String>>();
 
   List<UserModel> selectedUsers = [];
@@ -45,20 +46,6 @@ class ClassroomProvider with ChangeNotifier {
 
   final usersKey = GlobalKey<DropdownSearchState<UserModel>>();
   int currentIndex = 1;
-  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  void updatePageIndex(int index) {
-    currentIndex = index;
-    notifyListeners();
-  }
-
-  void handleCheckBoxState({bool updateState = true, required GlobalKey<DropdownSearchState<String>> popupBuilderKey, required bool? popupBuilderSelection}) {
-    var selectedItem = popupBuilderKey.currentState?.popupGetSelectedItems ?? [];
-    var isAllSelected = popupBuilderKey.currentState?.popupIsAllItemSelected ?? false;
-    popupBuilderSelection = selectedItem.isEmpty ? false : (isAllSelected ? true : null);
-
-    if (updateState) notifyListeners();
-  }
 
   Future<void> addClassroom(BuildContext context, ClassroomModel classroom) async {
     BuildContext? dialogContext;
@@ -74,11 +61,19 @@ class ClassroomProvider with ChangeNotifier {
           );
         });
     await service.addClassroom(classroom).then((value) async {
-      Navigator.of(dialogContext!).pop();
-      Navigator.of(context).pop();
+      if (dialogContext!.mounted) {
+        Navigator.of(dialogContext!).pop();
+      }
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
     }).onError((error, stackTrace) {
-      Navigator.of(dialogContext!).pop();
-      showingDialog(context, "errors", '$error');
+      if (dialogContext!.mounted) {
+        Navigator.of(dialogContext!).pop();
+      }
+      if (context.mounted) {
+        showingDialog(context, "errors", '$error');
+      }
     });
   }
 
@@ -103,33 +98,9 @@ class ClassroomProvider with ChangeNotifier {
     });
   }
 
-  Future<void> showingDialog(
-    BuildContext context,
-    String title,
-    String contents,
-  ) async {
-    await showAnimatedDialog<void>(
-        context: context,
-        barrierDismissible: true,
-        duration: const Duration(milliseconds: 150),
-        builder: (BuildContext context) {
-          return DialogWidget(
-            dialogTitle: title,
-            dialogContent: contents,
-            onConfirm: () {
-              //  Navigator.pop(context);
-              Navigator.pop(context);
-            },
-          );
-        });
-  }
-
   Future<void> updateClassroom(BuildContext context, ClassroomModel classroom) async {
     BuildContext? dialogContext;
     if (detectClassroomChange(classroom)) {
-      print(colorToHex(selectedColor!) == classroom.colorHex);
-      print("selected color hex ${colorToHex(selectedColor!)}");
-      print("original color hex ${classroom.colorHex}");
       showingDialog(context, "No Changes Detected", "Please make sure to modify at least one field before attempting to update.");
     } else {
       final List<String> selectedUsersIds = [];
@@ -149,24 +120,97 @@ class ClassroomProvider with ChangeNotifier {
         invitedUsersRef: invitedUsersRef,
         label: classroomLabelController.text,
         colorHex: colorToHex(selectedColor!),
-        comments: classroom.comments,
+        messages: classroom.messages,
         createdByRef: classroom.createdByRef,
         files: classroom.files,
+        folders: classroom.folders,
         createdAt: classroom.createdAt,
         updatedAt: DateTime.now(),
       );
       showDialog<void>(
-          //  barrierColor: Colors.transparent,
           barrierDismissible: false,
           context: context,
           builder: (BuildContext cxt) {
             dialogContext = cxt;
-            return const LoadingProgressDialog(
-              title: "Updating classroom",
-              content: "Processing...",
-            );
+            return const LoadingProgressDialog(title: "Updating classroom", content: "Processing...");
           });
       await service.updateClassroom(updatedClassroom).then((value) async {
+        if (dialogContext!.mounted) {
+          Navigator.of(dialogContext!).pop();
+        }
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+      }).onError((error, stackTrace) {
+        if (dialogContext!.mounted) {
+          Navigator.of(dialogContext!).pop();
+        }
+        if (context.mounted) {
+          showingDialog(context, "errors", '$error');
+        }
+      });
+    }
+  }
+
+  Future<void> addFolderToClassRoom(BuildContext context, ClassroomModel classroom) async {
+    BuildContext? dialogContext;
+
+    final updatedClassroom = ClassroomModel(
+      id: classroom.id,
+      invitedUsersRef: classroom.invitedUsersRef,
+      label: classroom.label,
+      colorHex: classroom.colorHex,
+      messages: classroom.messages,
+      createdByRef: classroom.createdByRef,
+      files: classroom.files,
+      folders: classroom.folders,
+      createdAt: classroom.createdAt,
+      updatedAt: classroom.updatedAt,
+    );
+    showDialog<void>(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext cxt) {
+          dialogContext = cxt;
+          return const LoadingProgressDialog(title: "Adding folder", content: "Processing...");
+        });
+    await service.updateClassroom(updatedClassroom).then((value) async {
+      classroomFolderController.clear();
+      Navigator.of(dialogContext!).pop();
+      Navigator.of(context).pop();
+    }).onError((error, stackTrace) {
+      Navigator.of(dialogContext!).pop();
+      showingDialog(context, "errors", '$error');
+    });
+  }
+
+  Future<void> updateFolder(BuildContext context, FolderModel folder, ClassroomModel classroom) async {
+    if (detectFolderChanges(folder)) {
+      showingDialog(context, "No Changes Detected", "Please make sure to modify at least one field before attempting to update.");
+    } else {
+      BuildContext? dialogContext;
+      final currentFolder = FolderModel(
+        colorHex: colorToHex(folderSelectedColor!),
+        folderName: classroomFolderController.text,
+        createdByRef: folder.createdByRef,
+        files: folder.files,
+        folderId: folder.folderId,
+        createdAt: folder.createdAt,
+        updatedAt: DateTime.now(),
+      );
+
+      showDialog<void>(
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext cxt) {
+            dialogContext = cxt;
+            return const LoadingProgressDialog(title: "Updating folder", content: "Processing...");
+          });
+
+      final folderIndex = classroom.folders!.indexWhere((e) => e.folderId == folder.folderId);
+      classroom.folders![folderIndex] = currentFolder;
+      await service.updateClassroom(classroom).then((value) async {
+        classroomFolderController.clear();
         Navigator.of(dialogContext!).pop();
         Navigator.of(context).pop();
       }).onError((error, stackTrace) {
@@ -176,38 +220,39 @@ class ClassroomProvider with ChangeNotifier {
     }
   }
 
-  Future<void> pickAndUploadFileAndUpdateClassroom(
-    BuildContext context,
-    ClassroomModel classroom,
-    UserModel currentUser,
-  ) async {
+  Future<void> pickAndUploadFileAndUpdateClassroom({
+    required BuildContext context,
+    required ClassroomModel classroom,
+    required UserModel currentUser,
+    String? folderId,
+  }) async {
     try {
-      // Pick a file
       FilePickerResult? result = await FilePicker.platform.pickFiles();
       if (result == null || result.files.isEmpty) {
         print("File picking cancelled.");
         return;
       } else {
-        BuildContext? dialogContext;
         PlatformFile pickedFile = result.files.first;
         print("Picked file: ${pickedFile.name}");
 
-        showDialog(
-          barrierDismissible: false,
+        // showDialog(
+        //   barrierDismissible: false,
+        //   context: context,
+        //   builder: (ctx) {
+        //     dialogContext = ctx;
+        //     return const LoadingProgressDialog(title: 'Uploading File...', content: "Processing");
+        //   },
+        // );
+        String? fileUrl = await storage.uploadFileWithProgressSnackbar(
           context: context,
-          builder: (ctx) {
-            dialogContext = ctx;
-            return const LoadingProgressDialog(title: 'Uploading File...', content: "Processing");
-          },
+          classroomId: classroom.id,
+          file: pickedFile,
         );
-        // Upload the file to Firebase Storage
-        String? fileUrl = await storage.uploadFile(classroom.id, pickedFile);
         if (fileUrl == null) {
           showingDialog(context, "File Upload Failed", "Failed to upload the file. Please try again.");
           return;
         }
 
-        // Create a FileModel for the uploaded file
         FileModel newFile = FileModel(
             fileId: const Uuid().v1(),
             fileUrl: fileUrl,
@@ -216,159 +261,64 @@ class ClassroomProvider with ChangeNotifier {
             fileName: pickedFile.name,
             uploadedAt: DateTime.now(),
             sender: currentUser);
+        if (folderId != null) {
+          List<FolderModel>? updatedFolders = classroom.folders ?? [];
+          final updatedFolderIndex = updatedFolders.indexWhere((e) => e.folderId == folderId);
+          List<FileModel> updatedFiles = updatedFolders[updatedFolderIndex].files!;
+          updatedFiles.add(newFile);
+          updatedFolders[updatedFolderIndex].files = updatedFiles;
 
-        // Update the ClassroomModel with the new file
-        List<FileModel> updatedFiles = classroom.files ?? [];
-        updatedFiles.add(newFile);
+          final updatedClassroom = ClassroomModel(
+            folders: updatedFolders,
+            id: classroom.id,
+            invitedUsersRef: classroom.invitedUsersRef,
+            label: classroom.label,
+            colorHex: classroom.colorHex,
+            messages: classroom.messages,
+            createdByRef: classroom.createdByRef,
+            createdAt: classroom.createdAt,
+            updatedAt: DateTime.now(),
+            files: classroom.files,
+          );
 
-        final updatedClassroom = ClassroomModel(
-          id: classroom.id,
-          invitedUsersRef: classroom.invitedUsersRef,
-          label: classroom.label,
-          colorHex: classroom.colorHex,
-          comments: classroom.comments,
-          createdByRef: classroom.createdByRef,
-          createdAt: classroom.createdAt,
-          updatedAt: DateTime.now(),
-          files: updatedFiles, // Add updated files list
-        );
+          await service.updateClassroom(updatedClassroom).then((value) async {
+            // Navigator.of(dialogContext!).pop();
+            print("Classroom updated successfully.");
+          }).onError((error, stackTrace) {
+            //  Navigator.of(dialogContext!).pop();
+            showingDialog(context, "Error", '$error');
+          });
+          print("uploadinggggg inside folder");
+        } else {
+          List<FileModel> updatedFiles = classroom.files ?? [];
+          updatedFiles.add(newFile);
 
-        // Show loading dialog
+          final updatedClassroom = ClassroomModel(
+            folders: classroom.folders,
+            id: classroom.id,
+            invitedUsersRef: classroom.invitedUsersRef,
+            label: classroom.label,
+            colorHex: classroom.colorHex,
+            messages: classroom.messages,
+            createdByRef: classroom.createdByRef,
+            createdAt: classroom.createdAt,
+            updatedAt: DateTime.now(),
+            files: updatedFiles,
+          );
 
-        // Update the classroom in Firestore
-        await service.updateClassroom(updatedClassroom).then((value) async {
-          Navigator.of(dialogContext!).pop();
-          //  Navigator.of(context).pop();
-          print("Classroom updated successfully.");
-        }).onError((error, stackTrace) {
-          Navigator.of(dialogContext!).pop();
-          showingDialog(context, "Error", '$error');
-        });
+          await service.updateClassroom(updatedClassroom).then((value) async {
+            //  Navigator.of(dialogContext!).pop();
+            print("Classroom updated successfully.");
+
+            print("uploadinggggg OUTSIDE folder");
+          }).onError((error, stackTrace) {
+            //  Navigator.of(dialogContext!).pop();
+            showingDialog(context, "Error", '$error');
+          });
+        }
       }
     } catch (e) {
       print("Error during file picking and upload: $e");
-      showingDialog(context, "Error", "An error occurred: $e");
-    }
-  }
-
-  Future<void> pickAndUploadFileWithNotification(
-    BuildContext context,
-    ClassroomModel classroom,
-    UserModel currentUser,
-  ) async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.isEmpty) {
-        print("File picking cancelled.");
-        return;
-      }
-
-      PlatformFile pickedFile = result.files.first;
-      File file = File(pickedFile.path!);
-
-      // Firebase storage reference
-      final storageRef = FirebaseStorage.instance.ref().child('classrooms/${classroom.id}/${pickedFile.name}');
-      final uploadTask = storageRef.putFile(file);
-
-      // Display upload notification
-      const int notificationId = 1;
-      await flutterLocalNotificationsPlugin.show(
-        notificationId,
-        "Uploading File",
-        "0% completed",
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'upload_channel',
-            'File Uploads',
-            channelDescription: 'Track file uploads',
-            importance: Importance.high,
-            priority: Priority.high,
-            showProgress: true,
-            maxProgress: 100,
-            indeterminate: false,
-          ),
-        ),
-      );
-
-      // Track upload progress
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) async {
-        double progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-
-        // Update progress notification
-        await flutterLocalNotificationsPlugin.show(
-          notificationId,
-          "Uploading File",
-          "${progress.toStringAsFixed(0)}% completed",
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'upload_channel',
-              'File Uploads',
-              channelDescription: 'Track file uploads',
-              importance: Importance.high,
-              priority: Priority.high,
-              showProgress: true,
-              maxProgress: 100,
-              indeterminate: false,
-            ),
-          ),
-        );
-      });
-
-      // Wait for the upload to complete
-      await uploadTask.whenComplete(() async {
-        // Get file URL
-        String fileUrl = await storageRef.getDownloadURL();
-
-        // Create FileModel
-        FileModel newFile = FileModel(
-          fileId: const Uuid().v1(),
-          fileUrl: fileUrl,
-          fileType: pickedFile.extension ?? "unknown",
-          senderRef: FirebaseFirestore.instance.doc('users/${currentUser.userId}'),
-          fileName: pickedFile.name,
-          uploadedAt: DateTime.now(),
-          sender: currentUser,
-        );
-
-        // Update classroom files
-        List<FileModel> updatedFiles = classroom.files ?? [];
-        updatedFiles.add(newFile);
-
-        final updatedClassroom = ClassroomModel(
-          id: classroom.id,
-          invitedUsersRef: classroom.invitedUsersRef,
-          label: classroom.label,
-          colorHex: classroom.colorHex,
-          comments: classroom.comments,
-          createdByRef: classroom.createdByRef,
-          createdAt: classroom.createdAt,
-          updatedAt: DateTime.now(),
-          files: updatedFiles,
-        );
-
-        // Update Firestore
-        await service.updateClassroom(updatedClassroom);
-
-        // Show success notification
-        await flutterLocalNotificationsPlugin.show(
-          notificationId,
-          "Upload Complete",
-          "File uploaded successfully.",
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'upload_channel',
-              'File Uploads',
-              channelDescription: 'Track file uploads',
-              importance: Importance.high,
-              priority: Priority.high,
-            ),
-          ),
-        );
-
-        print("File uploaded successfully: $fileUrl");
-      });
-    } catch (e) {
-      print("Error during file upload: $e");
       showingDialog(context, "Error", "An error occurred: $e");
     }
   }
@@ -381,7 +331,7 @@ class ClassroomProvider with ChangeNotifier {
       context: context,
       builder: (ctx) {
         dialogContext = ctx;
-        return const LoadingProgressDialog(title: 'Uploading File...', content: "Processing");
+        return const LoadingProgressDialog(title: 'Deleting File...', content: "Processing");
       },
     );
     classroom.files!.removeWhere((e) => e.fileId == fileId);
@@ -395,143 +345,153 @@ class ClassroomProvider with ChangeNotifier {
     });
   }
 
-  // Future<void> downloadFileFromFirebase(String firebasePath, String fileName) async {
-  //   try {
-  //     // Request storage permission
-  //     if (!await requestStoragePermission()) {
-  //       print('Storage permission is required to save the file.');
-  //       return;
-  //     }
+  Future<void> deleteFileFromFolder(BuildContext context, ClassroomModel classroom, String fileId, String folderId) async {
+    BuildContext? dialogContext;
 
-  //     // Get reference to Firebase Storage file
-  //     final ref = FirebaseStorage.instance.ref(firebasePath);
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (ctx) {
+        dialogContext = ctx;
+        return const LoadingProgressDialog(title: 'Deleting File...', content: "Processing");
+      },
+    );
+    final folderIndex = classroom.folders!.indexWhere((e) => e.folderId == folderId);
 
-  //     // Temporary directory
-  //     final tempDir = await getTemporaryDirectory();
-  //     final tempFile = File('${tempDir.path}/$fileName');
-
-  //     // Download file to temporary location
-  //     await ref.writeToFile(tempFile);
-  //     print('File downloaded to temporary directory: ${tempFile.path}');
-
-  //     // Move file to Downloads directory
-  //     final downloadsDir = Directory('/storage/emulated/0/Download');
-  //     if (!downloadsDir.existsSync()) {
-  //       print('Downloads directory does not exist.');
-  //       return;
-  //     }
-
-  //     final finalFile = File('${downloadsDir.path}/$fileName');
-  //     await tempFile.copy(finalFile.path);
-
-  //     print('File saved to Downloads directory: ${finalFile.path}');
-  //   } catch (e) {
-  //     print('Error downloading file: $e');
-  //   }
-  // }
-
-  Future<bool> requestStoragePermission() async {
-    // final status = await Permission.storage.request();
-    final status = await Permission.manageExternalStorage.request();
-
-    if (status.isGranted) {
-      print('Storage permission granted.');
-      return true;
-    } else if (status.isDenied) {
-      print('Storage permission denied.');
-      return false;
-    } else if (status.isPermanentlyDenied) {
-      print('Storage permission permanently denied. Redirecting to app settings...');
-      await openAppSettings();
-      return false;
-    }
-
-    return false;
+    classroom.folders![folderIndex].files!.removeWhere((e) => e.fileId == fileId);
+    await service.updateClassroom(classroom).then((value) async {
+      Navigator.of(dialogContext!).pop();
+      print("folder updated successfully.");
+    }).onError((error, stackTrace) {
+      Navigator.of(context).pop();
+      showingDialog(context, "Error", '$error');
+    });
   }
 
-  Future<void> downloadFileFromFirebaseWeb(String firebasePath) async {
+  Future<void> deleteFolderFromClassroom(BuildContext context, ClassroomModel classroom, String folderId) async {
+    BuildContext? dialogContext;
+
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (ctx) {
+        dialogContext = ctx;
+        return const LoadingProgressDialog(title: 'Uploading File...', content: "Processing");
+      },
+    );
+    classroom.folders!.removeWhere((e) => e.folderId == folderId);
+    await service.updateClassroom(classroom).then((value) async {
+      Navigator.of(dialogContext!).pop();
+      //  Navigator.of(context).pop();
+      print("Classroom updated successfully.");
+    }).onError((error, stackTrace) {
+      Navigator.of(context).pop();
+      showingDialog(context, "Error", '$error');
+    });
+  }
+
+  Future<void> deleteInvitedUserFromClassroom(BuildContext context, ClassroomModel classroom, String invitedUserId) async {
+    BuildContext? dialogContext;
+    showDialog<void>(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext cxt) {
+          dialogContext = cxt;
+          return const LoadingProgressDialog(title: "Removing user", content: "Processing...");
+        });
+
+    classroom.invitedUsersRef!.removeWhere((userRef) {
+      return userRef.id == invitedUserId;
+    });
+    await service.updateClassroom(classroom).then((value) async {
+      if (dialogContext!.mounted) {
+        Navigator.of(dialogContext!).pop();
+      }
+    }).onError((error, stackTrace) {
+      if (context.mounted) {
+        showingDialog(context, "errors", '$error');
+      }
+    });
+  }
+
+  Future<void> downloadFileFromFirebaseWeb({
+    required String firebasePath,
+    required String fileName,
+    required BuildContext context,
+  }) async {
     try {
+      // Firebase Storage reference
       final ref = FirebaseStorage.instance.ref(firebasePath);
+
+      // Get the download URL from Firebase Storage
       final url = await ref.getDownloadURL();
 
-      final anchor = html.AnchorElement(href: url)
-        ..target = '_self'
-        ..download = firebasePath.split('/').last; // Extract file name from path
-      anchor.click();
-    } catch (e) {
-      print('Error downloading file: $e');
-    }
-  }
-
-  Future<void> downloadFileWithIsolate(String filePath, String downloadPath) async {
-    final receivePort = ReceivePort();
-
-    try {
-      await Isolate.spawn(
-        _downloadFileIsolate,
-        {
-          'filePath': filePath,
-          'downloadPath': downloadPath,
-          'sendPort': receivePort.sendPort,
-        },
+      // Fetch the file data as an ArrayBuffer
+      final response = await html.HttpRequest.request(
+        url,
+        responseType: 'arraybuffer',
       );
 
-      final result = await receivePort.first;
-      print('Received result: $result'); // Debugging line
+      // Convert ArrayBuffer to Uint8List
+      final arrayBuffer = response.response;
 
-      if (result is String) {
-        print('Error: $result'); // Handle error if isolate sends an error message
-      } else if (result is File) {
-        print('File downloaded successfully: ${result.path}');
-      }
+      // Convert ArrayBuffer to Uint8List
+      final bytes = Uint8List.view(arrayBuffer);
+
+      // Create a Blob with the file data
+      final blob = html.Blob([bytes]);
+
+      // Create a download link for the Blob
+      final downloadUrl = html.Url.createObjectUrlFromBlob(blob);
+
+      // Create an anchor element and set it up for download
+      final anchor = html.AnchorElement(href: downloadUrl)
+        ..target = '_self' // Open in the same window
+        ..download = fileName; // Set the file name for the downloaded file
+
+      // Trigger the click event to start the download
+      anchor.click();
+
+      // Clean up the object URL after the download is triggered
+      html.Url.revokeObjectUrl(downloadUrl);
+
+      print("Download triggered for $fileName");
     } catch (e) {
-      print('Error during isolate execution: $e');
+      print("Error during file download: $e");
+
+      // Handle error (show a dialog, etc.)
+      showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Download Failed'),
+            content: const Text('An error occurred while trying to download the file. Please try again later.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
-// Isolate function that handles the file download
-  void _downloadFileIsolate(Map<String, dynamic> params) async {
-    final String filePath = params['filePath'];
-    final String downloadPath = params['downloadPath'];
-    final SendPort sendPort = params['sendPort'];
+  void handleCheckBoxState({bool updateState = true, required GlobalKey<DropdownSearchState<String>> popupBuilderKey, required bool? popupBuilderSelection}) {
+    var selectedItem = popupBuilderKey.currentState?.popupGetSelectedItems ?? [];
+    var isAllSelected = popupBuilderKey.currentState?.popupIsAllItemSelected ?? false;
+    popupBuilderSelection = selectedItem.isEmpty ? false : (isAllSelected ? true : null);
 
-    print('Isolate started for $filePath'); // Debugging line
-
-    try {
-      final storageRef = FirebaseStorage.instance.ref().child(filePath);
-      final File file = File(downloadPath);
-
-      // Debugging the download attempt
-      print('Downloading file from Firebase...');
-      await storageRef.writeToFile(file);
-
-      print('File downloaded successfully!'); // Debugging line
-
-      // Send the file object back to the main thread
-      sendPort.send(file);
-    } catch (e) {
-      print('Error: $e');
-      sendPort.send('Error: $e');
-    }
+    if (updateState) notifyListeners();
   }
 
-  // Future<void> requestStoragePermission() async {
-  //   PermissionStatus status = await Permission.storage.status;
-
-  //   if (!status.isGranted) {
-  //     status = await Permission.storage.request();
-
-  //     if (status.isGranted) {
-  //       print('Storage permission granted');
-  //     } else if (status.isDenied) {
-  //       print('Storage permission denied');
-  //     } else if (status.isPermanentlyDenied) {
-  //       openAppSettings();
-  //     }
-  //   } else {
-  //     print('Storage permission already granted');
-  //   }
-  // }
+  void updatePageIndex(int index) {
+    currentIndex = index;
+    notifyListeners();
+  }
 
   bool detectClassroomChange(ClassroomModel classroom) {
     final List<String> origianlSelectedUsersId = [];
@@ -551,6 +511,10 @@ class ClassroomProvider with ChangeNotifier {
         (colorToHex(selectedColor!) == classroom.colorHex);
   }
 
+  bool detectFolderChanges(FolderModel folder) {
+    return folder.folderName == classroomFolderController.text && colorToHex(folderSelectedColor!) == folder.colorHex;
+  }
+
   void updateCategorySelection() {
     isSelectFromAllCategories = !isSelectFromAllCategories;
     notifyListeners();
@@ -565,6 +529,12 @@ class ClassroomProvider with ChangeNotifier {
     classroomLabelController.clear();
     selectedUsers.clear();
     selectedColor = Theme.of(context).colorScheme.primary;
+    notifyListeners();
+  }
+
+  void clearFolderControllers(BuildContext context) {
+    classroomFolderController.clear();
+    folderSelectedColor = Theme.of(context).colorScheme.primary;
     notifyListeners();
   }
 
@@ -589,129 +559,44 @@ class ClassroomProvider with ChangeNotifier {
     selectedColor = hexToColor(classroom.colorHex);
   }
 
+  void initFolderControllers(FolderModel folder) {
+    classroomFolderController.text = folder.folderName;
+
+    folderSelectedColor = hexToColor(folder.colorHex);
+  }
+
   void updateSelectedColor(Color color) {
     selectedColor = color;
     notifyListeners();
   }
 
-  Future<void> downloadFileFromFirebase(String firebasePath, String localFileName) async {
-    const notificationId = 0;
+  void updateFolderSelectedColor(Color color) {
+    folderSelectedColor = color;
+    notifyListeners();
+  }
 
-    try {
-      // Request Storage Permissions
-      if (!(await _requestStoragePermission())) {
-        await _showNotification(
-          notificationId,
-          'Permission Denied',
-          'Storage permission is required to save files.',
-        );
-        return;
-      }
+  void updateInsideFolder(bool value) {
+    isInsideFolder = value;
+    notifyListeners();
+  }
 
-      // Firebase reference
-      final ref = FirebaseStorage.instance.ref(firebasePath);
+  void setFolder(FolderModel folder) {
+    currentFolder = folder;
+  }
 
-      // Temporary file for download
-      final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/$localFileName');
-
-      // Display "Downloading..." notification
-      await _showNotification(
-        notificationId,
-        'Downloading...',
-        'Downloading $localFileName (0%)',
-        progress: 0,
-      );
-
-      // Start file download
-      ref.writeToFile(tempFile).snapshotEvents.listen(
-        (TaskSnapshot snapshot) async {
-          if (snapshot.state == TaskState.running) {
-            final progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            await _showNotification(
-              notificationId,
-              'Downloading...',
-              'Downloading $localFileName (${progress.toStringAsFixed(0)}%)',
-              progress: progress.toInt(),
-            );
-          } else if (snapshot.state == TaskState.success) {
-            // Handle successful download
-            await _saveFileToDownloads(tempFile, localFileName);
-            await _showNotification(
-              notificationId,
-              'Download Complete',
-              '$localFileName saved to Downloads.',
-            );
-          }
-        },
-        onError: (error) async {
-          print('Download error: $error');
-          await _showNotification(
-            notificationId,
-            'Download Failed',
-            'An error occurred while downloading $localFileName.',
+  Future<void> showingDialog(BuildContext context, String title, String contents) async {
+    await showAnimatedDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        duration: const Duration(milliseconds: 150),
+        builder: (BuildContext context) {
+          return DialogWidget(
+            dialogTitle: title,
+            dialogContent: contents,
+            onConfirm: () {
+              Navigator.pop(context);
+            },
           );
-        },
-      );
-    } catch (e) {
-      print('Unexpected error: $e');
-      await _showNotification(
-        notificationId,
-        'Error',
-        'Failed to download $localFileName.',
-      );
-    }
-  }
-
-// Helper function to save file to Downloads folder
-  Future<void> _saveFileToDownloads(File tempFile, String fileName) async {
-    try {
-      // Check if we can use the scoped Downloads directory
-      final downloadsDir = Directory('/storage/emulated/0/Download');
-
-      if (await downloadsDir.exists()) {
-        final downloadedFile = File('${downloadsDir.path}/$fileName');
-        await tempFile.copy(downloadedFile.path);
-        print('File saved to: ${downloadedFile.path}');
-      } else {
-        throw Exception('Downloads directory not accessible.');
-      }
-    } catch (e) {
-      print('Error saving file: $e');
-      throw Exception('Failed to save file to Downloads.');
-    }
-  }
-
-// Helper function to request storage permission
-  Future<bool> _requestStoragePermission() async {
-    final status = await Permission.manageExternalStorage.request();
-    return status.isGranted;
-  }
-
-// Helper function to show notifications
-  Future<void> _showNotification(
-    int notificationId,
-    String title,
-    String body, {
-    int? progress,
-  }) async {
-    final androidDetails = AndroidNotificationDetails(
-      'download_channel',
-      'File Downloads',
-      channelDescription: 'Notifications for file downloads',
-      importance: Importance.max,
-      priority: Priority.high,
-      onlyAlertOnce: true,
-      showProgress: progress != null,
-      maxProgress: 100,
-      progress: progress ?? 0,
-    );
-
-    await flutterLocalNotificationsPlugin.show(
-      notificationId,
-      title,
-      body,
-      NotificationDetails(android: androidDetails),
-    );
+        });
   }
 }

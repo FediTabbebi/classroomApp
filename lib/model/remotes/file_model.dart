@@ -1,4 +1,4 @@
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FileModel {

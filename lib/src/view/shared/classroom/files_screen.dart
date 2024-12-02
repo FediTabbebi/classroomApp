@@ -1,17 +1,19 @@
-import 'package:auto_size_text/auto_size_text.dart';
-import 'package:classroom_app/constant/app_colors.dart';
-import 'package:classroom_app/model/classroom_model.dart';
+import 'package:classroom_app/locator.dart';
+import 'package:classroom_app/model/remotes/classroom_model.dart';
+import 'package:classroom_app/model/remotes/file_model.dart';
+import 'package:classroom_app/model/remotes/folder_model.dart';
 import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/classroom_provider.dart';
-import 'package:classroom_app/provider/download_helper.dart';
+import 'package:classroom_app/provider/upload_helper.dart';
 import 'package:classroom_app/provider/user_provider.dart';
-import 'package:classroom_app/src/widget/dialog_widget.dart';
-import 'package:classroom_app/src/widget/elevated_button_widget.dart';
+import 'package:classroom_app/src/view/shared/classroom/inside_folder_screen.dart';
+import 'package:classroom_app/src/view/shared/classroom/widget/file_listtile_widget.dart';
+import 'package:classroom_app/src/view/shared/classroom/widget/folder_listtile_widget.dart';
+import 'package:classroom_app/src/widget/add_update_folder_dialog.dart';
+import 'package:classroom_app/theme/themes.dart';
 import 'package:classroom_app/utils/extension_helper.dart';
-import 'package:classroom_app/utils/file_icon_helper.dart';
-import 'package:classroom_app/utils/helper.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
 import 'package:provider/provider.dart';
 
 class FilesScreen extends StatefulWidget {
@@ -25,14 +27,14 @@ class FilesScreen extends StatefulWidget {
 
 class _FilesScreenState extends State<FilesScreen> {
   late final ScrollController _scrollController;
-  late final String userRole;
-  final downloadHelper = FileDownloadHelper();
+  late final String roleModel;
+  final uploadHelper = locator<UploadHelper>();
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    userRole = context.read<UserProvider>().currentUser!.role!.id;
+    roleModel = context.read<UserProvider>().currentUser!.role!.id;
   }
 
   @override
@@ -43,223 +45,165 @@ class _FilesScreenState extends State<FilesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          height: 50,
-          child: Row(
-              children: [
-            ElevatedButtonWidget(
-              radius: 3,
-              height: 30,
-              width: 107,
-              onPressed: () {},
-              text: "Folder",
-              iconData: Icons.add,
-            ),
-            InkWell(
-              onTap: () async {
-                if (context.read<AppService>().isMobileDevice) {
-                  await context.read<ClassroomProvider>().pickAndUploadFileWithNotification(context, widget.classroom, context.read<UserProvider>().currentUser!);
-                } else {
-                  await context.read<ClassroomProvider>().pickAndUploadFileAndUpdateClassroom(context, widget.classroom, context.read<UserProvider>().currentUser!);
-                }
-              },
-              child: SizedBox(
-                width: 107,
-                height: 30,
-                child: Center(
+    return Selector<ClassroomProvider, bool>(
+        selector: (context, provider) => provider.isInsideFolder,
+        builder: (context, isInsideFolder, child) {
+          return Column(
+            children: [
+              if (!isInsideFolder)
+                Container(
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 30, bottom: 10),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Icon(
-                          Icons.upload_outlined,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const Text("Upload"),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            InkWell(
-              onTap: () {},
-              child: SizedBox(
-                width: 107,
-                height: 30,
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Icon(
-                          Icons.grid_on_outlined,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const Text("Grid View"),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          ].divide(const SizedBox(width: 10))),
-        ),
-        Expanded(
-          child: widget.classroom.files!.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                  child: Center(
-                      child: Text(
-                    "This classroom has no uploaded files at the moment",
-                    textAlign: TextAlign.center,
-                  )),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                  controller: _scrollController,
-                  //  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: widget.classroom.files!.length,
-                  itemBuilder: (context, index) {
-                    final file = widget.classroom.files![index];
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: FileIconHelper.getWidgetForFile(
-                        extension: file.fileType,
-                        imageUrl: file.fileUrl, // Pass the URL for images
-                        iconSize: 48.0, // Optional size customization
-                      ),
-                      title: AutoSizeText(
-                        minFontSize: 12,
-                        maxLines: 2,
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                        getFileNameWithoutExtension(file.fileName),
-                      ),
-                      subtitle: Text(
-                        "Uploaded At ${formatDate(file.uploadedAt)}",
-                        style: const TextStyle(fontSize: 10, color: AppColors.darkGrey),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Text(
-                              "By ${file.sender?.firstName} ${file.sender?.lastName}",
-                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: AppColors.darkGrey, fontSize: 12),
-                            ),
+                      // mainAxisAlignment: ResponsiveWidget.isSmallScreen(context) ? MainAxisAlignment.center : MainAxisAlignment.start,
+                      children: [
+                    InkWell(
+                      onTap: () async {
+                        showAnimatedDialog<void>(
+                            barrierDismissible: false,
+                            animationType: DialogTransitionType.fadeScale,
+                            duration: const Duration(milliseconds: 300),
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AddUpdateFolderDialog(
+                                classroom: widget.classroom,
+                              );
+                            });
+                      },
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(3)),
+                          gradient: LinearGradient(
+                            begin: Alignment.topRight,
+                            end: Alignment.bottomLeft,
+                            colors: [
+                              Themes.primaryColor,
+                              Themes.secondaryColor,
+                            ],
                           ),
-                          MenuAnchor(
-                              alignmentOffset: const Offset(-130, -35),
-                              builder: (BuildContext context, MenuController controller, Widget? child) {
-                                return InkWell(
-                                  onTap: () {
-                                    if (controller.isOpen) {
-                                      controller.close();
-                                    } else {
-                                      controller.open();
-                                    }
-                                  },
-                                  child: const Icon(
-                                    FontAwesomeIcons.ellipsisVertical,
-                                    color: AppColors.darkGrey,
-                                    size: 20,
-                                  ),
-                                );
-                              },
-                              menuChildren: [
-                                SizedBox(
-                                  width: 150,
-                                  child: MenuItemButton(
-                                    leadingIcon: Padding(
-                                      padding: const EdgeInsets.only(right: 8.0),
-                                      child: Icon(
-                                        FontAwesomeIcons.download,
-                                        color: Theme.of(context).colorScheme.primary,
-                                        size: 17.5,
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      "Download",
-                                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                                    ),
-                                    onPressed: () async {
-                                      // After permission is granted, proceed with the download logic
-                                      if (context.read<AppService>().isMobileDevice) {
-                                        // await context.read<ClassroomProvider>().requestStoragePermission();
-                                        await downloadHelper.downloadFileFromFirebase("Classroom files/${widget.classroom.id}/${file.fileName}", file.fileName);
-
-                                        // await context.read<ClassroomProvider>().downloadFileFromFirebase("Classroom files/${widget.classroom.id}/${file.fileName}", file.fileName);
-                                      } else {
-                                        await context.read<ClassroomProvider>().downloadFileFromFirebaseWeb("Classroom files/${widget.classroom.id}/${file.fileName}");
-                                      }
-                                    },
-                                  ),
-                                ),
-                                if (userRole == "1" || userRole == "2" || userRole == file.sender!.role!.id)
-                                  SizedBox(
-                                    width: 150,
-                                    child: MenuItemButton(
-                                      onPressed: () async {
-                                        showDialog<void>(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return DialogWidget(
-                                              dialogTitle: "Delete confirmation",
-                                              dialogContent: "Are you sure you want to delete this file?",
-                                              isConfirmDialog: true,
-                                              onConfirm: () async {
-                                                Navigator.pop(context);
-                                                await context.read<ClassroomProvider>().deleteFileFromClassroom(context, widget.classroom, file.fileId);
-                                              },
-                                            );
-                                          },
-                                        );
-                                      },
-                                      leadingIcon: Padding(
-                                        padding: const EdgeInsets.only(right: 8.0),
-                                        child: Icon(
-                                          FontAwesomeIcons.trashCan,
-                                          color: Theme.of(context).colorScheme.primary,
-                                          size: 17.5,
-                                        ),
-                                      ),
-                                      child: const SizedBox(
-                                        width: 100,
-                                        child: Text(
-                                          "Delete",
-                                          style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ]),
-                        ],
+                        ),
+                        width: 127,
+                        height: 30,
+                        alignment: Alignment.center,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(right: 8.0),
+                              child: Icon(Icons.add, size: 20, color: Colors.white),
+                            ),
+                            Text(
+                              "Add Folder",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
+                    ),
+                    InkWell(
+                      onTap: () async {
+                        if (context.read<AppService>().isMobileDevice) {
+                          await uploadHelper.pickAndUploadFileWithNotification(context: context, classroom: widget.classroom, currentUser: context.read<UserProvider>().currentUser!);
+                        } else {
+                          await context
+                              .read<ClassroomProvider>()
+                              .pickAndUploadFileAndUpdateClassroom(context: context, classroom: widget.classroom, currentUser: context.read<UserProvider>().currentUser!);
+                        }
+                      },
+                      child: SizedBox(
+                        width: 127,
+                        height: 30,
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Icon(
+                                  Icons.upload_outlined,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              const Text("Upload File"),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ].divide(const SizedBox(width: 10))),
                 ),
-        ),
-      ],
-    );
-  }
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 150), // Animation duration
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    // Slide animation from left to right
 
-  String getFileNameWithoutExtension(String fileName) {
-    // Find the last index of the period (.) and remove the extension.
-    int index = fileName.lastIndexOf('.');
-    if (index != -1) {
-      return fileName.substring(0, index); // Remove the extension
-    } else {
-      return fileName; // In case there is no extension
-    }
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  child: isInsideFolder
+                      ? Selector<ClassroomProvider, FolderModel?>(
+                          selector: (context, provider) => provider.currentFolder,
+                          builder: (context, currentFolder, child) {
+                            return StreamProvider<List<FileModel>?>(
+                              create: (context) => service.listenToFilesInFolder(
+                                classroom: widget.classroom,
+                                folderId: currentFolder?.folderId,
+                                context: context,
+                              ),
+                              initialData: null,
+                              child: Consumer<List<FileModel>?>(builder: (context, fileList, child) {
+                                return FolderDetailsScreen(
+                                  key: const ValueKey('FolderDetailsScreen'), // Unique key
+                                  folder: currentFolder,
+                                  classroom: widget.classroom,
+                                  roleModel: roleModel, fileList: fileList,
+                                );
+                              }),
+                            );
+                          })
+                      : widget.classroom.items == null || widget.classroom.items!.isEmpty
+                          ? const Center(
+                              key: ValueKey('EmptyScreen'), // Unique key
+                              child: Text("No files or folders available."),
+                            )
+                          : ListView.builder(
+                              key: const ValueKey('ListViewScreen'), // Unique key
+                              //shrinkWrap: true,
+                              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                              controller: _scrollController,
+                              itemCount: widget.classroom.items!.length,
+                              itemBuilder: (context, index) {
+                                final item = widget.classroom.items![index];
+
+                                if (item.type == "file") {
+                                  // Render file
+                                  final file = item.file!;
+                                  return FileListtile(
+                                    file: file,
+                                    classroom: widget.classroom,
+                                    roleModel: roleModel,
+                                  );
+                                } else if (item.type == "folder") {
+                                  // Render folder
+                                  final folder = item.folder!;
+                                  return FolderListtileWidget(
+                                    folder: folder,
+                                    classroom: widget.classroom,
+                                    roleModel: roleModel,
+                                    onTap: () {
+                                      context.read<ClassroomProvider>().setFolder(folder);
+                                      context.read<ClassroomProvider>().updateInsideFolder(true);
+                                    },
+                                  );
+                                } else {
+                                  return const SizedBox.shrink(); // Handle unexpected types
+                                }
+                              },
+                            ),
+                ),
+              )
+            ],
+          );
+        });
   }
 }

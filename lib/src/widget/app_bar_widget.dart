@@ -12,15 +12,18 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final IconData? leadingIconData;
   final Widget? leadingWidget;
   final bool withBackIcon;
+  final Color? backgroundColor;
+  final void Function()? onTapBackIcon;
   final List<Widget>? actions;
-  const AppBarWidget({required this.title, this.leadingWidget, this.withBackIcon = false, required this.subtitle, this.leadingIconData, this.actions, super.key});
+  const AppBarWidget(
+      {required this.title, this.leadingWidget, this.onTapBackIcon, this.backgroundColor, this.withBackIcon = false, required this.subtitle, this.leadingIconData, this.actions, super.key});
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       toolbarHeight: 72,
       automaticallyImplyLeading: false,
-      backgroundColor: context.read<AppService>().isMobileDevice ? Colors.transparent : Theme.of(context).cardTheme.color,
+      backgroundColor: backgroundColor ?? (context.read<AppService>().isMobileDevice ? Colors.transparent : Theme.of(context).cardTheme.color),
       elevation: 0,
       leadingWidth: withBackIcon
           ? leadingWidget != null
@@ -37,9 +40,10 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: InkWell(
-                  onTap: () {
-                    context.pop();
-                  },
+                  onTap: onTapBackIcon ??
+                      () {
+                        context.pop();
+                      },
                   splashColor: Colors.transparent,
                   hoverColor: Colors.transparent,
                   child: Icon(

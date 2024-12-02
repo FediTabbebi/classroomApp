@@ -21,11 +21,7 @@ class FileDownloadHelper {
     try {
       // Request Storage Permissions
       if (!(await _requestStoragePermission())) {
-        await _showNotification(
-          notificationId,
-          'Permission Denied',
-          'Storage permission is required to save files.',
-        );
+        await _showNotification(notificationId, 'Permission Denied', 'Storage permission is required to save files.', importance: Importance.high, priority: Priority.high);
         return;
       }
 
@@ -37,12 +33,7 @@ class FileDownloadHelper {
       final tempFile = File('${tempDir.path}/$localFileName');
 
       // Display "Downloading..." notification
-      await _showNotification(
-        notificationId,
-        'Downloading...',
-        'Downloading $localFileName (0%)',
-        progress: 0,
-      );
+      await _showNotification(notificationId, 'Downloading...', 'Downloading $localFileName (0%)', progress: 0, importance: Importance.high, priority: Priority.high);
 
       // Start file download and listen for progress
       ref.writeToFile(tempFile).snapshotEvents.listen(
@@ -50,31 +41,19 @@ class FileDownloadHelper {
           switch (snapshot.state) {
             case TaskState.running:
               final progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              await _showNotification(
-                notificationId,
-                'Downloading...',
-                'Downloading $localFileName (${progress.toStringAsFixed(0)}%)',
-                progress: progress.toInt(),
-              );
+              await _showNotification(notificationId, 'Downloading...', 'Downloading $localFileName (${progress.toStringAsFixed(0)}%)',
+                  progress: progress.toInt(), importance: Importance.low, priority: Priority.low);
               break;
 
             case TaskState.success:
               // Handle successful download
               await _saveFileToDownloads(tempFile, localFileName);
-              await _showNotification(
-                notificationId,
-                'Download Complete',
-                '$localFileName saved to Downloads.',
-              );
+              await _showNotification(notificationId, 'Download Complete', '$localFileName saved to Downloads.', importance: Importance.high, priority: Priority.high);
               break;
 
             case TaskState.error:
               // Handle download error
-              await _showNotification(
-                notificationId,
-                'Download Failed',
-                'Failed to download $localFileName.',
-              );
+              await _showNotification(notificationId, 'Download Failed', 'Failed to download $localFileName.', importance: Importance.high, priority: Priority.high);
               break;
 
             default:
@@ -83,20 +62,12 @@ class FileDownloadHelper {
         },
         onError: (error) async {
           print('Download error: $error');
-          await _showNotification(
-            notificationId,
-            'Download Failed',
-            'An error occurred while downloading $localFileName.',
-          );
+          await _showNotification(notificationId, 'Download Failed', 'An error occurred while downloading $localFileName.', importance: Importance.high, priority: Priority.high);
         },
       );
     } catch (e) {
       print('Unexpected error: $e');
-      await _showNotification(
-        notificationId,
-        'Error',
-        'Failed to download $localFileName.',
-      );
+      await _showNotification(notificationId, 'Error', 'Failed to download $localFileName.', importance: Importance.high, priority: Priority.high);
     }
   }
 
@@ -120,24 +91,29 @@ class FileDownloadHelper {
 
   // Helper function to request storage permission
   Future<bool> _requestStoragePermission() async {
-    final status = await Permission.manageExternalStorage.request();
-    return status.isGranted;
+    if (await Permission.manageExternalStorage.isDenied) {
+      final status = await Permission.manageExternalStorage.request();
+      if (!status.isGranted) return false;
+    }
+
+    // Request notification permission (Android 13+)
+    if (Platform.isAndroid && await Permission.notification.isDenied) {
+      final notificationStatus = await Permission.notification.request();
+      if (!notificationStatus.isGranted) return false;
+    }
+
+    return true;
   }
 
   // Helper function to show notifications
-  Future<void> _showNotification(
-    int notificationId,
-    String title,
-    String body, {
-    int? progress,
-  }) async {
+  Future<void> _showNotification(int notificationId, String title, String body, {int? progress, required Importance importance, required Priority priority}) async {
     final androidDetails = AndroidNotificationDetails(
       'download_channel',
       'File Downloads',
       channelDescription: 'Notifications for file downloads',
-      importance: Importance.max,
-      priority: Priority.high,
-      onlyAlertOnce: true,
+      importance: importance,
+      priority: priority,
+      // onlyAlertOnce: true,
       showProgress: progress != null,
       maxProgress: 100,
       progress: progress ?? 0,

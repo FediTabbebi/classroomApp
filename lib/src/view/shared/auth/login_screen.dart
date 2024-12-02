@@ -21,7 +21,7 @@ class LoginScreen extends StatelessWidget {
           child: Scaffold(
               floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
               floatingActionButton: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 8.0, 8.0),
+                padding: const EdgeInsets.fromLTRB(16, 34, 8.0, 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [

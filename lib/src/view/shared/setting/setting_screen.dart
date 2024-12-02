@@ -69,6 +69,8 @@ class UserSettingsScreen extends StatelessWidget {
                               Text(
                                 "${context.read<UserProvider>().currentUser!.firstName} ${context.read<UserProvider>().currentUser!.lastName}",
                                 style: const TextStyle(fontSize: 18),
+                                softWrap: true,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               Text(context.read<UserProvider>().currentUser!.email, style: const TextStyle(color: AppColors.darkGrey, fontSize: 14)),
                               Text(
@@ -160,7 +162,7 @@ class UserSettingsScreen extends StatelessWidget {
   void onItemPressed(BuildContext context, {required int index}) {
     switch (index) {
       case 0:
-        context.goNamed(context.read<UserProvider>().currentUser!.role!.id == "1"
+        context.pushNamed(context.read<UserProvider>().currentUser!.role!.id == "1"
             ? "adminProfile"
             : context.read<UserProvider>().currentUser!.role!.id == "1"
                 ? "instructorEditProfile"

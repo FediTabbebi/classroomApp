@@ -1,5 +1,5 @@
 import 'package:classroom_app/locator.dart';
-import 'package:classroom_app/model/user_model.dart';
+import 'package:classroom_app/model/remotes/user_model.dart';
 import 'package:classroom_app/provider/app_service.dart';
 import 'package:classroom_app/provider/update_user_provider.dart';
 import 'package:classroom_app/provider/user_provider.dart';
@@ -9,8 +9,8 @@ import 'package:classroom_app/src/view/admin/user_management/user_management.dar
 import 'package:classroom_app/src/view/instructor/instructor_home_main.dart';
 import 'package:classroom_app/src/view/shared/auth/login_screen.dart';
 import 'package:classroom_app/src/view/shared/auth/register_screen.dart';
+import 'package:classroom_app/src/view/shared/classroom/all_classrooms_screen.dart';
 import 'package:classroom_app/src/view/shared/classroom/classroom_home_main.dart';
-import 'package:classroom_app/src/view/shared/classroom/classroom_screen.dart';
 import 'package:classroom_app/src/view/shared/setting/edit_profile.dart';
 import 'package:classroom_app/src/view/shared/setting/setting_screen.dart';
 import 'package:classroom_app/src/view/shared/setting/setting_screen_web.dart';
@@ -103,7 +103,7 @@ class AppNavigation {
                           state,
                         ) =>
                             buildPageWithDefaultTransition(
-                              child: const ClassroomScreen(),
+                              child: const AllClassroomsScreen(),
                               context: context,
                               state: state,
                               // PostManagementScreen(),
@@ -115,7 +115,6 @@ class AppNavigation {
                             pageBuilder: (context, state) {
                               final String classroomId = state.pathParameters["classroomId"]!;
                               return CustomTransitionPage(
-                                  key: state.pageKey,
                                   child: ClassroomHomeMain(
                                     classroomId: classroomId,
                                   ),
@@ -230,10 +229,9 @@ class AppNavigation {
                           state,
                         ) =>
                             buildPageWithDefaultTransition(
-                              child: const ClassroomScreen(),
+                              child: const AllClassroomsScreen(),
                               context: context,
                               state: state,
-                              // PostManagementScreen(),
                             ),
                         routes: [
                           GoRoute(
@@ -357,7 +355,7 @@ class AppNavigation {
                           state,
                         ) =>
                             buildPageWithDefaultTransition(
-                              child: const ClassroomScreen(),
+                              child: const AllClassroomsScreen(),
                               context: context,
                               state: state,
                               // PostManagementScreen(),
